@@ -1,0 +1,17 @@
+---
+model: TypeII_NLO_v1_2_UFO
+
+gen_cmd: ['import model ${model}',
+          'generate p p > mu+ mu+ j j',
+          'add process p p > mu- mu- j j',
+          'output typeII_single_prod_mmjj_${parameters.MDPP}_${parameters.vevD}',
+          'launch ',
+          'shower=pythia8',
+          'set vevD: ${parameters.vevD}',
+          'set MD0 ${parameters.MD0}',
+          'set MDP ${parameters.MDP}',
+          'set MDPP ${parameters.MDPP}',
+          'set WD0 ${parameters.WD0}',
+          'set WDP ${parameters.WDP}',
+          'set WDPP ${parameters.WDPP}'
+          ]

@@ -1,0 +1,11 @@
+--- 
+parameters:
+  vevD: 1e-7
+  MD0: 500
+  MDP: 503
+  MDPP: 502
+  WD0: 'auto' 
+  WDP: 'auto' 
+  WDPP: 'auto' 
+
+shower: 'pythia8'

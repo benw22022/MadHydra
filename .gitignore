@@ -1,0 +1,6 @@
+*.tar*
+*.gz*
+*MG5*
+py.py
+outputs/*
+*__pycache__*

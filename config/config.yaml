@@ -1,0 +1,26 @@
+---
+defaults:
+  - _self_
+  - parameters.yaml
+  - processes.yaml
+  - override hydra/job_logging: colorlog
+  - override hydra/hydra_logging: colorlog
+
+process:
+  - typeII_vbs_process.yaml
+
+# Hydra specific
+# TODO: Add help message, see: https://hydra.cc/docs/configure_hydra/app_help/ 
+hydra:
+  help:
+    template:
+      'TODO: Add help message'
+  run:
+    dir:
+      outputs/generate_output/${now:%Y-%m-%d_%H-%M-%S}
+
+batch: False
+
+madgraph_dir: MG5_aMC_v3_4_1
+
+output_dir: ${model}_${parameters.MDPP}_${parameters.vevD}
