@@ -5,8 +5,6 @@ defaults:
   - override hydra/job_logging: colorlog
   - override hydra/hydra_logging: colorlog
 
-shower: 'pythia8'
-
 # Hydra specific
 # TODO: Add help message, see: https://hydra.cc/docs/configure_hydra/app_help/ 
 hydra:
@@ -15,15 +13,23 @@ hydra:
       'TODO: Add help message'
   run:
     dir:
-      outputs/generate_output/${now:%Y-%m-%d_%H-%M-%S}
+      ${output_loc}/outputs/generate_output/${now:%Y-%m-%d_%H-%M-%S}_${output_dir}
 
   sweeper:
     params:
       parameters.MDPP: 84, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 200
       parameters.vevD: 0.1, 0.5, 1.0
+  
+  sweep:
+    dir: ${output_loc}/multirun/${now:%Y-%m-%d}_${process.model}
+    subdir: ${hydra.job.num}_${parameters.MDPP}_${parameters.vevD}
 
 batch: False
 
 madgraph_dir: MG5_aMC_v3_4_1
 
-output_dir: ${model}_${parameters.MDPP}_${parameters.vevD}
+output_dir: ${process.model}_${parameters.MDPP}_${parameters.vevD}
+
+output_loc: /eos/user/b/bewilson/typeII_generation
+
+debug: False

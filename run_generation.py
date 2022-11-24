@@ -30,6 +30,9 @@ def run_generation(config: DictConfig) -> None:
         
         print(f"running: {config.process.output_dir}")
         
+        if config.debug:
+            return
+        
         os.system(f"condor_submit -batch-name {config.process.output_dir} htc_generation.submit")
         return 
 
@@ -38,6 +41,10 @@ def run_generation(config: DictConfig) -> None:
         log.debug(f"Process is: \n {config.process}")
         source.write_proc_card(config)
         madgraph_exec = os.path.join(to_absolute_path(config.madgraph_dir), 'bin', 'mg5_aMC')
+        
+        if config.debug:
+            return
+        
         process = Popen([madgraph_exec, 'proc_card.dat'], stdout=PIPE, stderr=STDOUT)
         with process.stdout:
             log_subprocess_output(process.stdout, 'MadGraph')
