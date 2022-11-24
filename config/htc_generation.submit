@@ -1,0 +1,14 @@
+universe   = vanilla
+executable = setup_and_run.sh
+log    = generation_$(ClusterID).log
+output = generation_$(ClusterID)_$(ProcId).out
+error  = generation_$(ClusterID)_$(ProcId).error
+
+Requirements  = (OpSysAndVer == "CentOS7")
++MyProject    = "af-atlas"
++JobFlavour   = "tomorrow"
+RequestCpus   = 10
+notify_user   = benjamin.james.wilson@cern.ch
+notification  = Error
+
+queue

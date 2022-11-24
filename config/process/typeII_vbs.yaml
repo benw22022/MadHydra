@@ -1,0 +1,24 @@
+---
+model: TypeII_NLO_v1_2_UFO
+
+output_dir: typeII_single_prod_mmjj_${parameters.MDPP}_${parameters.vevD}
+
+gen_cmd: ['import model ${process.model}',
+          'generate p p > mu+ mu+ j j',
+          'add process p p > mu- mu- j j',
+          'output ${process.output_dir}',
+          'launch ',
+          'shower=pythia8',
+          'set vevD: ${parameters.vevD}',
+          'set MD0 ${parameters.MDPP}',
+          'set MDP ${parameters.MDPP}',
+          'set MDPP ${parameters.MDPP}',
+          'set WD0 ${parameters.WD0}',
+          'set WDP ${parameters.WDP}',
+          'set WDPP ${parameters.WDPP}',
+          'set lamHD1 1.0',
+          'set lamD1 1.0',
+          ]
+
+          # NOTE: setting MD0 = MDP = MDPP on purpose to simplfy things
+          # NOTE: lamHD1 1.0 = lamD1 1.0 = 1 like in paper (also how J&L did things)

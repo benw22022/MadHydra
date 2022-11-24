@@ -2,12 +2,10 @@
 defaults:
   - _self_
   - parameters.yaml
-  - processes.yaml
   - override hydra/job_logging: colorlog
   - override hydra/hydra_logging: colorlog
 
-process:
-  - typeII_vbs_process.yaml
+shower: 'pythia8'
 
 # Hydra specific
 # TODO: Add help message, see: https://hydra.cc/docs/configure_hydra/app_help/ 
@@ -18,6 +16,11 @@ hydra:
   run:
     dir:
       outputs/generate_output/${now:%Y-%m-%d_%H-%M-%S}
+
+  sweeper:
+    params:
+      parameters.MDPP: 84, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 200
+      parameters.vevD: 0.1, 0.5, 1.0
 
 batch: False
 
