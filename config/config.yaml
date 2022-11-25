@@ -13,7 +13,7 @@ hydra:
       'TODO: Add help message'
   run:
     dir:
-      ${output_loc}/outputs/generate_output/${now:%Y-%m-%d_%H-%M-%S}_${output_dir}
+      ${transfer_dir}/outputs/generate_output/${now:%Y-%m-%d_%H-%M-%S}_${output_dir}
 
   sweeper:
     params:
@@ -21,15 +21,12 @@ hydra:
       parameters.vevD: 0.1, 0.5, 1.0
   
   sweep:
-    dir: ${output_loc}/multirun/${now:%Y-%m-%d}_${process.model}
+    dir: ${transfer_dir}/multirun/${now:%Y-%m-%d}_${process.model}
     subdir: ${hydra.job.num}_${parameters.MDPP}_${parameters.vevD}
 
-batch: False
+madgraph_dir: MG5_aMC_v3_4_1                                          # location of MadGraph directory (relative to repo)
+output_dir: ${process.model}_${parameters.MDPP}_${parameters.vevD}    # MadGraph output directory
+transfer_dir: /eos/user/b/bewilson/typeII_generation/${process.model} # location so save output files
 
-madgraph_dir: MG5_aMC_v3_4_1
-
-output_dir: ${process.model}_${parameters.MDPP}_${parameters.vevD}
-
-output_loc: /eos/user/b/bewilson/typeII_generation
-
-debug: False
+batch: False                                                        # run on htc batch system
+debug: False                                                        # run, but don't run MadGraph or submit batch jobs
