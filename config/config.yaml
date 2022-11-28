@@ -24,8 +24,8 @@ hydra:
     dir: multirun/${now:%Y-%m-%d}_${process.model}
     subdir: ${hydra.job.num}_MDPP_${parameters.MDPP}_vevD_${parameters.vevD}
 
-madgraph_dir: MG5_aMC_v3_4_1                                          # location of MadGraph directory (relative to repo)
-transfer_dir: /eos/user/b/bewilson/typeII_generation/${process.model} # location so save output files
+madgraph_dir: MG5_aMC_v3_4_1                                                                    # location of MadGraph directory (relative to repo)
+transfer_dir: /eos/user/b/bewilson/typeII_generation/${process.model}_generation                # location so save output files
 output_dir: ${transfer_dir}/${process.model}_MDPP_${parameters.MDPP}_vevD_${parameters.vevD}    # MadGraph output directory
 
 batch: False                                                        # run on htc batch system

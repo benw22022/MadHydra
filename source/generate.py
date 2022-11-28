@@ -47,7 +47,7 @@ source ./run_generation.sh"
     with open('run_generation.sh', 'w') as run_script:
         cmd = f"#!/bin/bash \n \
 eval \"$(conda shell.bash hook)\" \n \
-conda activate python39 \n 
+conda activate python39 \n \
 python3 {madgraph_exec} proc_card.dat | tee log.generate"
         run_script.write(cmd) # pip3 install six --user \n \
                 
