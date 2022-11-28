@@ -38,18 +38,16 @@ def compose_htc_job(config: DictConfig) -> None:
     # Create python env for MadGraph
     with open('setup_and_run.sh', 'w') as run_script:
         cmd = f"#!/bin/bash \n \
-yes | conda create -n python39 python=3.9 \n \
-source cd /afs/cern.ch/work/b/bewilson/TypeII_joboptions/outputs/generate_output/2022-11-24_10-35-16 \n \
+source cd {cwd} \n \
 chmod +x  run_generation.sh \n \
 source ./run_generation.sh" 
-        run_script.write(cmd)
+        run_script.write(cmd) # yes | conda create -n python39 python=3.9 \n \
     
     # Execute MadGraph 
     with open('run_generation.sh', 'w') as run_script:
         cmd = f"#!/bin/bash \n \
 eval \"$(conda shell.bash hook)\" \n \
-conda activate python39 \n \
-pip3 install six --user \n \
-/afs/cern.ch/work/b/bewilson/TypeII_joboptions/MG5_aMC_v3_4_1/bin/mg5_aMC proc_card.dat"
-        run_script.write(cmd)
+conda activate python39 \n 
+python3 {madgraph_exec} proc_card.dat | tee log.generate"
+        run_script.write(cmd) # pip3 install six --user \n \
                 
