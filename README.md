@@ -54,7 +54,7 @@ With that done, the setup of this framework is now complete.
 Generating events
 --------------------------
 
-To run event generation in `MadHydra` you'll need to define your own process config file. This is a `yaml` file placed in `config/processes` and should follow this template something like this:
+To run event generation in `MadHydra` you'll need to define your own process config file. This is a `yaml` file placed in `config/processes` and look something like this template:
 ```
 ---
 # Name of model
