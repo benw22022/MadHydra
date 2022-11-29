@@ -1,6 +1,5 @@
 """
-Run generation of TypeII seesaw model 
-https://arxiv.org/abs/1912.08975
+Main steering script
 """
 import logging
 log = logging.getLogger(__name__)
