@@ -1,5 +1,5 @@
 universe   = vanilla
-executable = setup_and_run.sh
+executable = run_generation.sh
 log    = generation_$(ClusterID).log
 output = generation_$(ClusterID)_$(ProcId).out
 error  = generation_$(ClusterID)_$(ProcId).error

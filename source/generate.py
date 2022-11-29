@@ -35,19 +35,45 @@ def compose_htc_job(config: DictConfig) -> None:
     madgraph_exec = os.path.join(to_absolute_path(config.madgraph_dir), 'bin', 'mg5_aMC')
     cwd = os.getcwd()
     
-    # Create python env for MadGraph
-    with open('setup_and_run.sh', 'w') as run_script:
-        cmd = f"#!/bin/bash \n \
-source cd {cwd} \n \
-chmod +x  run_generation.sh \n \
-source ./run_generation.sh" 
-        run_script.write(cmd) # yes | conda create -n python39 python=3.9 \n \
-    
-    # Execute MadGraph 
+    # Create script to execute MadGraph 
     with open('run_generation.sh', 'w') as run_script:
         cmd = f"#!/bin/bash \n \
 eval \"$(conda shell.bash hook)\" \n \
 conda activate python39 \n \
-python3 {madgraph_exec} proc_card.dat | tee log.generate"
-        run_script.write(cmd) # pip3 install six --user \n \
-                
+python3 {madgraph_exec} {cwd}/proc_card.dat | tee log.generate \n"
+        
+        # Run clean up of MG dir (avoid running into disk quota limits!)
+        if config.clean_up:
+            cmd += f"rm -r tmp* \n"
+            cmd += f"rm -r py.py \n"
+            cmd += f"rm -r {config.process.output_dir}/bin \n"
+            cmd += f"rm -r {config.process.output_dir}/Source \n"
+            cmd += f"rm -r {config.process.output_dir}/lib \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*.f \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*.inc \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/Makefile \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/done \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/.txt \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/.mg \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/.sh \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/.dat \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/randinit \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/proc_characteristics \n"
+            
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/*.f \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/*.inc \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/*.sym \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/Makefile \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.txt \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.mg \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.sh \n"
+            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.dat \n"
+         
+        # Transfer files back to launch dir or transfer them to another location like eos   
+        if config.transfer_files:
+            cmd += f"\nmv {config.process.output_dir} {config.transfer_dir}"
+        else:
+            cmd += f"\n mv * {cwd}"
+        
+        # Write script 
+        run_script.write(cmd)
