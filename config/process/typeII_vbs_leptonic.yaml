@@ -1,7 +1,9 @@
 ---
 model: TypeII_NLO_v1_2_UFO
 
-output_dir: typeII_single_prod_mmjj_${parameters.MDPP}_${parameters.vevD}
+process_name: typeII_single_prod_mmjj
+
+output_dir: ${process.process_name}_${parameters.MDPP}_${parameters.vevD}
 
 gen_cmd: ['import model ${process.model}',
           'generate p p > mu+ mu+ j j',
