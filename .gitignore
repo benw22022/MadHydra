@@ -5,4 +5,4 @@ py.py
 outputs/*
 *__pycache__*
 multirun/*
-outputs/*
+*output*
