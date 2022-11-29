@@ -8,7 +8,6 @@ Requirements  = (OpSysAndVer == "CentOS7")
 +MyProject    = "af-atlas"
 +JobFlavour   = "tomorrow"
 RequestCpus   = 10
-notify_user   = benjamin.james.wilson@cern.ch
 notification  = Error
 
 queue

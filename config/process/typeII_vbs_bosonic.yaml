@@ -1,13 +1,13 @@
 ---
-model: TypeII_NLO_v1_2_UFO
+model: TypeII_NLO_v1_2_UFO            # See: https://arxiv.org/abs/1912.08975
 
 process_name: typeII_single_prod_WWjj
 
 output_dir: ${process.process_name}_${parameters.MDPP}_${parameters.vevD}
 
 gen_cmd: ['import model ${process.model}',
-          'generate p p > w+ w+ j j',
-          'add process p p > w- w- j j',
+          'generate p p > d++ j j (dpp > w+ w+)',
+          'add process p p > d-- j j (dpp > w- w-)',
           'output ${process.output_dir}',
           'launch ',
           'shower=pythia8',

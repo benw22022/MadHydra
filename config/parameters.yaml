@@ -7,5 +7,3 @@ parameters:
   WD0: 'auto' 
   WDP: 'auto' 
   WDPP: 'auto' 
-
-shower: 'pythia8'
