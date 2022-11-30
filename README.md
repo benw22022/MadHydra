@@ -100,4 +100,9 @@ When you run this command, a new directory will be created here `generate_output
 
 You'll also notice that inside this directory we will also get a `.hydra` directory, inside you'll find the configuration that were used to run this job. Never lose track of what settings you used to generate your events ever again!
 
-
+Running on htc batch system
+------------------------------------
+If you want to run on the htc condor batch system you can, all you have to do is set `batch=True` e.g.
+```
+python3 run_generation.py +process=SM_ssWW_EWK batch=True
+```
