@@ -107,6 +107,8 @@ If you want to run on the htc condor batch system you can, all you have to do is
 python3 run_generation.py +process=SM_ssWW_EWK batch=True
 ```
 
+To customise the number of cores and walltime of your batch jobs you can modify the `config/htc_generation.submit` file. See the CERN [batchdocs](https://batchdocs.web.cern.ch/local/quick.html) for more information on customising batch jobs.
+
 Generating a grid of samples
 ------------------------------------
 If you want to run a grid of samples with different parameters you can do so easily by modifying the `hydra` field in `config.yaml` e.g.
