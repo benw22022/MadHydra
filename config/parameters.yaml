@@ -7,3 +7,4 @@ parameters:
   WD0: 'auto' 
   WDP: 'auto' 
   WDPP: 'auto' 
+  nevents:  10000

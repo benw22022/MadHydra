@@ -6,8 +6,8 @@ process_name: typeII_single_prod_WWjj
 output_dir: ${process.process_name}_${parameters.MDPP}_${parameters.vevD}
 
 gen_cmd: ['import model ${process.model}',
-          'generate p p > d++ j j (dpp > w+ w+)',
-          'add process p p > d-- j j (dpp > w- w-)',
+          'generate p p > d++ j j, (d++ > w+ w+ )',
+          'add process p p > d-- j j, (d-- > w- w- )',
           'output ${process.output_dir}',
           'launch ',
           'shower=pythia8',
@@ -20,6 +20,7 @@ gen_cmd: ['import model ${process.model}',
           'set WDPP ${parameters.WDPP}',
           'set lamHD1 1.0',
           'set lamD1 1.0',
+          'set nevents ${parameters.nevents}'
           ]
 
           # NOTE: setting MD0 = MDP = MDPP on purpose to simplfy things

@@ -10,4 +10,5 @@ gen_cmd: ['generate p p > mu+ vm mu+ vm j j QCD=0',
           'output ${process.output_dir}',
           'launch',
           'shower=pythia8',
+          'set nevents ${parameters.nevents}'
           ]

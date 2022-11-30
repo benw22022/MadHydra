@@ -20,6 +20,7 @@ gen_cmd: ['import model ${process.model}',
           'set WDPP ${parameters.WDPP}',
           'set lamHD1 1.0',
           'set lamD1 1.0',
+          'set nevents ${parameters.nevents}'
           ]
 
           # NOTE: setting MD0 = MDP = MDPP on purpose to simplfy things
