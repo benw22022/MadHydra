@@ -72,9 +72,12 @@ python3 {madgraph_exec} {cwd}/proc_card.dat | tee log.generate \n"
         # Transfer files back to launch dir or transfer them to another location like eos
         # Also copy .hydra and log.generate files
         if config.transfer_files:
-            cmd += f"\nmv {config.process.output_dir} {config.transfer_dir}"
-            cmd += f"\ncp -r {cwd}/.hydra {config.transfer_dir}"
-            cmd += f"\ncp log.generate {config.transfer_dir}"
+            
+            transfer_loc = os.path.join(config.transfer_dir, os.path.basename(cwd))
+            
+            cmd += f"mv {config.process.output_dir} {transfer_loc} \n"
+            cmd += f"cp -r {cwd}/.hydra {transfer_loc} \n"
+            cmd += f"cp log.generate {transfer_loc} \n"
         
         # Otherwise transfer all files from condor back to orginal cwd
         else:
