@@ -17,7 +17,35 @@ def write_proc_card(config : DictConfig) -> None:
     with open('proc_card.dat', 'w') as proc_card:
         for line in config.process.gen_cmd:
             proc_card.write(f'{line}\n')
-            
+
+def get_cleanup_cmd(cmd: str=''):
+    cmd += f"rm -r tmp* \n"
+    cmd += f"rm -r py.py \n"
+    cmd += f"rm -r {config.process.output_dir}/bin \n"
+    cmd += f"rm -r {config.process.output_dir}/Source \n"
+    cmd += f"rm -r {config.process.output_dir}/lib \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*.f \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*.inc \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/Makefile \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/done \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/.txt \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/.mg \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/.sh \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/.dat \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/randinit \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/proc_characteristics \n"
+    
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/*.f \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/*.inc \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/*.sym \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/Makefile \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.txt \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.mg \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.sh \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.dat \n"
+
+    return cmd
+
 def compose_htc_job(config: DictConfig) -> None:
     """
     Makes scripts to run job on batch system
@@ -44,35 +72,11 @@ python3 {madgraph_exec} {cwd}/proc_card.dat | tee log.generate \n"
         
         # Run clean up of MG dir (avoid running into disk quota limits!)
         if config.cleanup:
-            cmd += f"rm -r tmp* \n"
-            cmd += f"rm -r py.py \n"
-            cmd += f"rm -r {config.process.output_dir}/bin \n"
-            cmd += f"rm -r {config.process.output_dir}/Source \n"
-            cmd += f"rm -r {config.process.output_dir}/lib \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*.f \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*.inc \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/Makefile \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/done \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/.txt \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/.mg \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/.sh \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/.dat \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/randinit \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/proc_characteristics \n"
-            
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/*.f \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/*.inc \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/*.sym \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/Makefile \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.txt \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.mg \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.sh \n"
-            cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.dat \n"
+            cmd = get_cleanup_cmd(cmd)   
          
         # Transfer files back to launch dir or transfer them to another location like eos
         # Also copy .hydra and log.generate files
-        if config.transfer_files:
-            
+        if config.transfer_files:    
             transfer_loc = os.path.join(config.transfer_dir, os.path.basename(cwd))
             
             cmd += f"mv {config.process.output_dir} {transfer_loc} \n"

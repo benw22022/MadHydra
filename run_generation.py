@@ -4,22 +4,54 @@ Main steering script
 import logging
 log = logging.getLogger(__name__)
 
-import hydra
-from omegaconf import DictConfig
-import source
-from hydra.utils import get_original_cwd, to_absolute_path
-import subprocess
-from subprocess import Popen, PIPE, STDOUT
 import os
 import shutil
+import subprocess
+from subprocess import Popen, PIPE, STDOUT
+import hydra
+from hydra.utils import get_original_cwd, to_absolute_path
+from omegaconf import DictConfig
+import source
+from typing import List
 
 
-def log_subprocess_output(pipe, proc_name=''):
+def log_subprocess_output(pipe, proc_name: str='') -> None:
+    """
+    Logs output from subprocess to log file
+    args:
+        pipe: stdout buffer to read from
+        proc_name: str (default='')- a string to optionally label the process with
+    returns:
+        None
+    """
     for line in iter(pipe.readline, b''): # b'\n'-separated lines
         log.info(f"{proc_name}: %s", str(line).replace(r"\n", "").strip().replace("b\'", "").rstrip("\'").lstrip("\'"))
 
+def launch_process(cmd_list: List[str], proc_name: str='') -> int:
+    """
+    Launches a subprocess, just a little function to avoid some of the boilerplate
+    args:
+        cmd_list: List[str] - a list of commands/options to execute 
+        proc_name: str (default='')- a string to optionally label the process with when logging
+    returns:
+        int: exit code (0 means success)
+    """
+    
+    process = Popen(cmd_list, stdout=PIPE, stderr=STDOUT)
+    with process.stdout:
+        log_subprocess_output(process.stdout, proc_name)
+    return process.wait()
+
+
 @hydra.main(config_path="config", config_name="config")
 def run_generation(config: DictConfig) -> None:
+    """
+    Main steering script and hydra entry point
+    args:
+        config: DictConfig - Hydra configuration, automagically parsed by @hydra.main decorator
+    returns:
+        None
+    """
     
     if config.batch:
         log.info("Running on batch system")
@@ -27,7 +59,7 @@ def run_generation(config: DictConfig) -> None:
         
         shutil.copyfile(to_absolute_path('config/htc_generation.submit'), os.path.join(os.getcwd(), 'htc_generation.submit'))
         
-        print(f"running: {config.process.output_dir}")
+        log.info(f"running: {config.process.output_dir}")
         
         if config.debug:
             return
@@ -44,11 +76,12 @@ def run_generation(config: DictConfig) -> None:
         if config.debug:
             return
         
-        process = Popen([madgraph_exec, 'proc_card.dat'], stdout=PIPE, stderr=STDOUT)
-        with process.stdout:
-            log_subprocess_output(process.stdout, 'MadGraph')
-        exitcode = process.wait() # 0 means success
-        return 
+        launch_process([madgraph_exec, 'proc_card.dat'], 'MadGraph')
+        
+        if config.cleanup:
+            log.info("Runninhg cleanup")
+            cleanup_cmd = source.get_cleanup_cmd() 
+            launch_process(cleanup_cmd.split("\n"))
     
 if __name__ == "__main__":
     run_generation()
