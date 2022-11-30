@@ -106,3 +106,25 @@ If you want to run on the htc condor batch system you can, all you have to do is
 ```
 python3 run_generation.py +process=SM_ssWW_EWK batch=True
 ```
+
+Generating a grid of samples
+------------------------------------
+If you want to run a grid of samples with different parameters you can do so easily by modifying the `hydra` field in `config.yaml` e.g.
+```
+hydra:
+    sweeper:
+        params:
+            # set the parameters you wish to scan through
+            parameters.param1: a, b, c, d, e, f
+            parameters.param2: x, y, z
+
+    # Likewise you can customise the output directory for multirunning
+    sweep:
+        dir: multirun/${now:%Y-%m-%d}_${process.model}
+        subdir: ${process.output_dir}
+```
+
+To run in multirun mode set the `-m` flag when running e.g.
+```
+python3 run_generation.py +process=<myProcess> batch=True -m
+```
