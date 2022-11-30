@@ -130,3 +130,5 @@ To run in multirun mode set the `-m` flag when running e.g.
 ```
 python3 run_generation.py +process=<myProcess> batch=True -m
 ```
+
+See the `hydra` [docs](https://hydra.cc/docs/tutorials/basic/running_your_app/multi-run/) for more information on customising the multirun functionatlity.
