@@ -37,13 +37,13 @@ def compose_htc_job(config: DictConfig) -> None:
     
     # Create script to execute MadGraph 
     with open('run_generation.sh', 'w') as run_script:
-        cmd = f"#!/bin/bash \n \
-eval \"$(conda shell.bash hook)\" \n \
-conda activate python39 \n \
+        cmd = f"#!/bin/bash \n\
+eval \"$(conda shell.bash hook)\" \n\
+conda activate python39 \n\
 python3 {madgraph_exec} {cwd}/proc_card.dat | tee log.generate \n"
         
         # Run clean up of MG dir (avoid running into disk quota limits!)
-        if config.clean_up:
+        if config.cleanup:
             cmd += f"rm -r tmp* \n"
             cmd += f"rm -r py.py \n"
             cmd += f"rm -r {config.process.output_dir}/bin \n"
