@@ -69,9 +69,14 @@ python3 {madgraph_exec} {cwd}/proc_card.dat | tee log.generate \n"
             cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.sh \n"
             cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.dat \n"
          
-        # Transfer files back to launch dir or transfer them to another location like eos   
+        # Transfer files back to launch dir or transfer them to another location like eos
+        # Also copy .hydra and log.generate files
         if config.transfer_files:
             cmd += f"\nmv {config.process.output_dir} {config.transfer_dir}"
+            cmd += f"\ncp -r {cwd}/.hydra {config.transfer_dir}"
+            cmd += f"\ncp log.generate {config.transfer_dir}"
+        
+        # Otherwise transfer all files from condor back to orginal cwd
         else:
             cmd += f"\n mv * {cwd}"
         
