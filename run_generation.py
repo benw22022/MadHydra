@@ -80,7 +80,7 @@ def run_generation(config: DictConfig) -> None:
         
         if config.cleanup:
             log.info("Runninhg cleanup")
-            cleanup_cmd = source.get_cleanup_cmd() 
+            cleanup_cmd = source.get_cleanup_cmd(config) 
             launch_process(cleanup_cmd.split("\n"))
     
 if __name__ == "__main__":

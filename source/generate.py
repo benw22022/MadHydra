@@ -18,7 +18,7 @@ def write_proc_card(config : DictConfig) -> None:
         for line in config.process.gen_cmd:
             proc_card.write(f'{line}\n')
 
-def get_cleanup_cmd(cmd: str=''):
+def get_cleanup_cmd(config: DictConfig, cmd: str=''):
     cmd += f"rm -r tmp* \n"
     cmd += f"rm -r py.py \n"
     cmd += f"rm -r {config.process.output_dir}/bin \n"
@@ -72,7 +72,7 @@ python3 {madgraph_exec} {cwd}/proc_card.dat | tee log.generate \n"
         
         # Run clean up of MG dir (avoid running into disk quota limits!)
         if config.cleanup:
-            cmd = get_cleanup_cmd(cmd)   
+            cmd = get_cleanup_cmd(config, cmd)   
          
         # Transfer files back to launch dir or transfer them to another location like eos
         # Also copy .hydra and log.generate files
