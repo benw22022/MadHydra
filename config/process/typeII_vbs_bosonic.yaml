@@ -5,6 +5,8 @@ process_name: typeII_single_prod_WWjj
 
 output_dir: ${process.process_name}_${parameters.MDPP}_${parameters.vevD}
 
+rivet: pp_dppjj_llvvjj
+
 gen_cmd: ['import model ${process.model}',
           'generate p p > d++ j j, (d++ > l+ vl l+ vl )',
           'add process p p > d-- j j, (d-- > l- vl l- vl )',

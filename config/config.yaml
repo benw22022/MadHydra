@@ -8,6 +8,8 @@ defaults:
 
 # TODO: Add help message, see: https://hydra.cc/docs/configure_hydra/app_help/ 
 hydra:
+  job:
+    chdir: True
   help:
     template:
       'TODO: Add help message'
