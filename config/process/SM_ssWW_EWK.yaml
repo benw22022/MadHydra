@@ -5,8 +5,8 @@ process_name: SM_ssWW_EWK
 
 output_dir: ${process.process_name}
 
-gen_cmd: ['generate p p > mu+ vm mu+ vm j j QCD=0',
-          'add process p p > mu- vm~ mu- vm~ j j QCD=0',
+gen_cmd: ['generate p p > w+ w+ j j QCD=0',
+          'add process p p > w- w- j j QCD=0',
           'output ${process.output_dir}',
           'launch',
           'shower=pythia8',

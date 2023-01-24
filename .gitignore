@@ -6,3 +6,9 @@ outputs/*
 *__pycache__*
 multirun/*
 *output*
+.asetup*
+*.json
+*.save
+*asetup*
+
+

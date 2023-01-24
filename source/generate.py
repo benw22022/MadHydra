@@ -19,6 +19,8 @@ def write_proc_card(config : DictConfig) -> None:
             proc_card.write(f'{line}\n')
 
 def get_cleanup_cmd(config: DictConfig, cmd: str=''):
+    cmd += f"pwd \n"
+    cmd += f"ls \n"
     cmd += f"rm -r tmp* \n"
     cmd += f"rm -r py.py \n"
     cmd += f"rm -r {config.process.output_dir}/bin \n"
@@ -68,7 +70,8 @@ def compose_htc_job(config: DictConfig) -> None:
         cmd = f"#!/bin/bash \n\
 eval \"$(conda shell.bash hook)\" \n\
 conda activate python39 \n\
-python3 {madgraph_exec} {cwd}/proc_card.dat | tee log.generate \n"
+python3 {madgraph_exec} {cwd}/proc_card.dat | tee log.generate \n\
+ls \n"
         
         # Run clean up of MG dir (avoid running into disk quota limits!)
         if config.cleanup:
@@ -76,9 +79,9 @@ python3 {madgraph_exec} {cwd}/proc_card.dat | tee log.generate \n"
          
         # Transfer files back to launch dir or transfer them to another location like eos
         # Also copy .hydra and log.generate files
-        if config.transfer_files:    
+        if config.transfer_files:
             transfer_loc = os.path.join(config.transfer_dir, os.path.basename(cwd))
-            
+            os.makedirs(transfer_loc, exist_ok=True)
             cmd += f"mv {config.process.output_dir} {transfer_loc} \n"
             cmd += f"cp -r {cwd}/.hydra {transfer_loc} \n"
             cmd += f"cp log.generate {transfer_loc} \n"

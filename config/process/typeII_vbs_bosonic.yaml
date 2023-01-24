@@ -6,12 +6,12 @@ process_name: typeII_single_prod_WWjj
 output_dir: ${process.process_name}_${parameters.MDPP}_${parameters.vevD}
 
 gen_cmd: ['import model ${process.model}',
-          'generate p p > d++ j j, (d++ > w+ w+ )',
-          'add process p p > d-- j j, (d-- > w- w- )',
+          'generate p p > d++ j j, (d++ > l+ vl l+ vl )',
+          'add process p p > d-- j j, (d-- > l- vl l- vl )',
           'output ${process.output_dir}',
-          'launch ',
+          'launch',
           'shower=pythia8',
-          'set vevD: ${parameters.vevD}',
+          'set vevd: ${parameters.vevD}',
           'set MD0 ${parameters.MDPP}',
           'set MDP ${parameters.MDPP}',
           'set MDPP ${parameters.MDPP}',
