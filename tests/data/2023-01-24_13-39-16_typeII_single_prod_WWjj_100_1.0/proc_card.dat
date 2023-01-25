@@ -1,0 +1,16 @@
+import model TypeII_NLO_v1_2_UFO
+generate p p > d++ j j, (d++ > l+ vl l+ vl )
+add process p p > d-- j j, (d-- > l- vl l- vl )
+output typeII_single_prod_WWjj_100_1.0
+launch
+shower=pythia8
+set vevd: 1.0
+set MD0 100
+set MDP 100
+set MDPP 100
+set WD0 auto
+set WDP auto
+set WDPP auto
+set lamHD1 1.0
+set lamD1 1.0
+set nevents 100

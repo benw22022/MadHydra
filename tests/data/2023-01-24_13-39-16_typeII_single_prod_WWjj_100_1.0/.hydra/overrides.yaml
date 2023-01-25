@@ -1,0 +1,4 @@
+- +process=typeII_vbs_bosonic
+- parameters.vevD=1.0
+- parameters.MDPP=100
+- parameters.nevents=100

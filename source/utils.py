@@ -28,7 +28,7 @@ def log_subprocess_output(pipe, proc_name: str='') -> None:
         cleaned_line = str(cleaned_line).replace(r"\n", "").strip().replace("b\"", "").rstrip("\'").lstrip("\'")
         log.info(f"{proc_name}: %s", cleaned_line)
 
-def launch_process(cmd_list: List[str], proc_name: str='') -> int:
+def launch_process(cmd_list: List[str], proc_name: str='', shell: bool=False) -> int:
     """
     Launches a subprocess, just a little function to avoid some of the boilerplate
     args:
@@ -41,10 +41,10 @@ def launch_process(cmd_list: List[str], proc_name: str='') -> int:
     if len(cmd_list) == 0:
         return 0
     
-    process = Popen(cmd_list, stdout=PIPE, stderr=STDOUT)
+    process = Popen(cmd_list, stdout=PIPE, stderr=STDOUT, shell=shell)
     with process.stdout:
         log_subprocess_output(process.stdout, proc_name)
-    
+        
     retcode = process.wait()
         
     return retcode

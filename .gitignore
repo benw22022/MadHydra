@@ -1,10 +1,9 @@
 *.tar*
-*.gz*
 *MG5*
 py.py
 outputs/*
 *__pycache__*
-multirun/*
+*multirun/*
 *output*
 .asetup*
 *.json
