@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <ostream>
+#include <cmath>
 #include <map>
 #include "Rivet/Analysis.hh"
 #include "Rivet/Tools/BinnedHistogram.hh"
@@ -16,13 +17,17 @@
 #include "Rivet/Projections/ChargedFinalState.hh"
 #include "Rivet/Projections/VisibleFinalState.hh"
 #include "Rivet/Projections/IdentifiedFinalState.hh"
+#include "Rivet/Projections/UnstableParticles.hh"
 #include "Rivet/Projections/FastJets.hh"
 #include "Rivet/Projections/MissingMomentum.hh"
 #include "Rivet/Projections/VetoedFinalState.hh"
 #include "Rivet/Projections/SmearedJets.hh"
 #include "Rivet/Projections/SmearedParticles.hh"
 #include "Rivet/Projections/SmearedMET.hh"
+#include "Rivet/Math/MathUtils.hh"
+#include "Rivet/Analyses/MC_JetAnalysis.hh"
 #include "TFile.h"
+#include "TTree.h"
 
 #include <math.h>
 
@@ -32,14 +37,58 @@
 
 namespace Rivet {
 
+  struct ParticleContainer{
+
+    FourMomentum momentum; 
+    long   pid;
+    bool   from_tau;
+    Particles parents;
+
+    ParticleContainer(){}
+
+    ParticleContainer(const Particle& p){
+      momentum = p.momentum();
+      from_tau = p.fromTau();
+      parents = p.parents();
+    }
+
+    ParticleContainer(const Jet& j){
+      momentum = j.momentum();
+      from_tau = j.tauTagged();
+    
+    }
+
+    ParticleContainer& operator+(const ParticleContainer& other){
+
+      if (this == &other){  return *this;}
+
+      this->momentum = this->momentum + other.momentum;
+
+      return *this;
+    }
+
+  };
+  
+
   //divided into constructor + 3 loops: init, analyze and finalize
 
   //==================================================================================//
   //=================================  Constructer ==================================//
   //=================================================================================//
   class pp_dpp_llvvjj : public Analysis {
-    
+
     public:
+
+      double calc_deltaR(const double& y1, const double& y2, const double& phi1, const double& phi2){
+
+      // double y1 = p1.momentum.rapidity();
+      // double y2 = p2.momentum.rapidity();
+      // double phi1 = p1.momentum.phi();
+      // double phi2 = p2.momentum.phi();
+
+      return sqrt(pow((y1 - y2), 2) + pow((phi1 - phi2), 2));
+
+      };
 
       /// Constructor
       pp_dpp_llvvjj() : Analysis("pp_dpp_llvvjj") {   }
@@ -71,6 +120,81 @@ namespace Rivet {
         MET_SMEAR = 1;
         JET_SMEAR = 1;
         MUON_SMEAR = 1;
+
+        // Output file
+        OutputFile = new TFile("output.root", "RECREATE");
+        OutputTree = new TTree("tree", "tree");
+        MetaDataTree = new TTree("metadata", "metadata");
+
+        OutputTree->Branch("jet_pt",     &jet_pt,     "jet_pt/F");
+        OutputTree->Branch("jet_rap",    &jet_rap,    "jet_rap/F");
+        OutputTree->Branch("jet_phi",    &jet_pt,     "jet_phi/F");
+        OutputTree->Branch("jet_mass",   &jet_mass,   "jet_mass/F");
+        OutputTree->Branch("jet_energy", &jet_energy, "jet_energy/F");
+        OutputTree->Branch("jet_px",     &jet_px,     "jet_px/F");
+        OutputTree->Branch("jet_py",     &jet_py,     "jet_py/F");
+        OutputTree->Branch("jet_pz",     &jet_pz,     "jet_pz/F");
+        OutputTree->Branch("jet_pid",    &jet_pid,    "jet_pid/L");
+
+        OutputTree->Branch("lep_pt",     &lep_pt,     "lep_pt/F");
+        OutputTree->Branch("lep_rap",    &lep_rap,    "lep_rap/F");
+        OutputTree->Branch("lep_phi",    &lep_pt,     "lep_phi/F");
+        OutputTree->Branch("lep_mass",   &lep_mass,   "lep_mass/F");
+        OutputTree->Branch("lep_energy", &lep_energy, "lep_energy/F");
+        OutputTree->Branch("lep_px",     &lep_px,     "lep_px/F");
+        OutputTree->Branch("lep_py",     &lep_py,     "lep_py/F");
+        OutputTree->Branch("lep_pz",     &lep_pz,     "lep_pz/F");
+        OutputTree->Branch("lep_pid",    &lep_pid,    "lep_pid/L");
+
+        OutputTree->Branch("tau_pt",     &tau_pt,     "tau_pt/F");
+        OutputTree->Branch("tau_rap",    &tau_rap,    "tau_rap/F");
+        OutputTree->Branch("tau_phi",    &tau_pt,     "tau_phi/F");
+        OutputTree->Branch("tau_mass",   &tau_mass,   "tau_mass/F");
+        OutputTree->Branch("tau_energy", &tau_energy, "tau_energy/F");
+        OutputTree->Branch("tau_px",     &tau_px,     "tau_px/F");
+        OutputTree->Branch("tau_py",     &tau_py,     "tau_py/F");
+        OutputTree->Branch("tau_pz",     &tau_pz,     "tau_pz/F");
+        OutputTree->Branch("tau_pid",    &tau_pid,    "tau_pid/L");
+
+        OutputTree->Branch("tau_comp_pt",     &tau_comp_pt,     "tau_comp_pt/F");
+        OutputTree->Branch("tau_comp_rap",    &tau_comp_rap,    "tau_comp_rap/F");
+        OutputTree->Branch("tau_comp_phi",    &tau_comp_pt,     "tau_comp_phi/F");
+        OutputTree->Branch("tau_comp_mass",   &tau_comp_mass,   "tau_comp_mass/F");
+        OutputTree->Branch("tau_comp_energy", &tau_comp_energy, "tau_comp_energy/F");
+        OutputTree->Branch("tau_comp_px",     &tau_comp_px,     "tau_comp_px/F");
+        OutputTree->Branch("tau_comp_py",     &tau_comp_py,     "tau_comp_py/F");
+        OutputTree->Branch("tau_comp_pz",     &tau_comp_pz,     "tau_comp_pz/F");
+        OutputTree->Branch("tau_comp_pid",    &tau_comp_pid,    "tau_comp_pid/L");
+
+        OutputTree->Branch("MET_pt",     &MET_pt,  "MET_pt/F");
+        OutputTree->Branch("MET_rap",    &MET_rap, "MET_rap/F");
+        OutputTree->Branch("MET_phi",    &MET_pt,  "MET_phi/F");
+        OutputTree->Branch("MET",        &MET,     "MET/F");
+        OutputTree->Branch("MET_px",     &MET_px,  "MET_px/F");
+        OutputTree->Branch("MET_py",     &MET_py,  "MET_py/F");
+        OutputTree->Branch("MET_pz",     &MET_pz,  "MET_pz/F");
+
+        OutputTree->Branch("ATLAS_smeared_MET_pt",     &ATLAS_smeared_MET_pt,  "ATLAS_smeared_MET_pt/F");
+        OutputTree->Branch("ATLAS_smeared_MET_rap",    &ATLAS_smeared_MET_rap, "ATLAS_smeared_MET_rap/F");
+        OutputTree->Branch("ATLAS_smeared_MET_phi",    &ATLAS_smeared_MET_pt,  "ATLAS_smeared_MET_phi/F");
+        OutputTree->Branch("ATLAS_smeared_MET",        &ATLAS_smeared_MET,     "ATLAS_smeared_MET/F");
+        OutputTree->Branch("ATLAS_smeared_MET_px",     &ATLAS_smeared_MET_px,  "ATLAS_smeared_MET_px/F");
+        OutputTree->Branch("ATLAS_smeared_MET_py",     &ATLAS_smeared_MET_py,  "ATLAS_smeared_MET_py/F");
+        OutputTree->Branch("ATLAS_smeared_MET_pz",     &ATLAS_smeared_MET_pz,  "ATLAS_smeared_MET_pz/F");
+
+        MetaDataTree->Branch("total_xs",               &xs_total,              "total_xs_madgraph/F");
+        MetaDataTree->Branch("total_xs_error",         &xs_total_err,          "total_xs_error/F");
+        MetaDataTree->Branch("sum_of_weights",         &sum_of_weights,         "sum_of_weights/F");
+        MetaDataTree->Branch("sum_of_weights_err",     &sum_of_weights_err,     "sum_of_weights_err/F");
+        MetaDataTree->Branch("fid_sum_of_weights",     &fid_sum_of_weights,     "fid_sum_of_weights/F");
+        MetaDataTree->Branch("fid_sum_of_weights_err", &fid_sum_of_weights_err, "fid_sum_of_weights_err/F");
+        MetaDataTree->Branch("fid_xs",                 &xs_fid,                 "fid_xs/F");
+        MetaDataTree->Branch("fid_xs_err",             &fid_xs_err,             "fid_xs_err/F");
+        MetaDataTree->Branch("nsurvive_events",        &nsurvive_events,        "nsurvive_events/F");
+        MetaDataTree->Branch("ninit_events",           &ninit_events,           "ninit_events/F");
+        MetaDataTree->Branch("presel_eff",             &presel_eff,             "preself_eff/F");
+
+
 
         //=================================  General Final States Declaration  =================================//
         // define final state
@@ -140,8 +264,8 @@ namespace Rivet {
         DressedLeptons dressed_elecs(photon, elec, 0.1, Cuts::abseta < 2.4 && Cuts::pT > 10*GeV);
         declare(dressed_elecs, "dressed_elecs");
 
-        SmearedParticles elecs_eff_smear_atlas(dressed_elecs, ELECTRON_EFF_ATLAS_RUN2, ELECTRON_SMEAR_ATLAS_RUN2);
-        declare(elecs_eff_smear_atlas, "elecs_eff_smear_atlas");
+        // SmearedParticles elecs_eff_smear_atlas(dressed_elecs, ELECTRON_EFF_ATLAS_RUN2, ELECTRON_SMEAR_ATLAS_RUN2);
+        // declare(elecs_eff_smear_atlas, "elecs_eff_smear_atlas");
 
         //=================================  Tau Decleration  =================================//
         
@@ -271,7 +395,16 @@ namespace Rivet {
       for (unsigned int i{0}; i < cand_jets.size(); i++)
       {
         for (unsigned int j{0}; j < non_hadronic_leps.size(); j++){
-          if (deltaR(non_hadronic_leps[j].momentum(), cand_jets[i].momentum()) > 0.3) { recon_jets.push_back(cand_jets[i]); }
+
+          auto p1     = non_hadronic_leps[j].momentum();
+          auto p2     = cand_jets[i].momentum();
+          double y1   = p1.rapidity();
+          double y2   = p2.rapidity();
+          double phi1 = p1.phi();
+          double phi2 = p2.phi();
+          double delR = calc_deltaR(y1, y2, phi1, phi2);
+
+          if (delR > 0.3) { recon_jets.push_back(cand_jets[i]); }
         }
       }
 
@@ -282,41 +415,41 @@ namespace Rivet {
       //=================== work out tau vis ===================//
 
       Particles non_tau_leps;
-      Particles tau_vis;
-      std::vector<Particles> tau_vis_comp;
-      Particles tau_vis_tmp // unsorted bag of particles from taus, will use to work out which particle goes with which tau if ditau
+      ParticleContainer tau_vis;
+      std::vector<std::vector<ParticleContainer>> tau_vis_comp;
+      std::vector<ParticleContainer> tau_vis_tmp; // unsorted bag of particles from taus, will use to work out which particle goes with which tau if ditau
       
       // get all particles from tau decays, place rest into non-tau containers
-      for(const Particle &p : cand_jets){ 
-        if (p.fromTau()){ tau_vis_tmp.append(p); }
-        else(nontau_jets.append(p);)
+      for(const Jet &j : cand_jets){ 
+        if (j.tauTagged()){ tau_vis_tmp.push_back(ParticleContainer(j)); }
+        else{nontau_jets.push_back(j);}
       }
 
       for(const Particle &p : non_hadronic_leps){ 
-        if (p.fromTau()){ tau_vis_tmp.append(p); }
-        else(nontau_leps.append(p);)
+        if (p.fromTau()){ tau_vis_tmp.push_back(ParticleContainer(p)); }
+        else{non_tau_leps.push_back(p);}
       }
 
       // get set of mother ids
-      std::set<long> mother_ids;
-      for(const Particle &p : tau_vis_tmp){ mother_ids.insert(p.mother()); }
+      std::set<Particle> parents;
+      for(const ParticleContainer &pc : tau_vis_tmp){ mother_ids.insert(pc.parents[0]); }
 
       // get all particles orginating from each mother tau
-      for(int i{0}; i<mother_ids.size(); i++){
-        Particles tmp_tau_comp;
-        for(const Particle &p : tau_vis_tmp){
-          if(tau_vis_tmp.mother() == mother_ids[i]){tmp_tau_comp.append(p); }
+      for(unsigned int i{0}; i<parents.size(); i++){
+        std::vector<ParticleContainer> tmp_tau_comp;
+        for(const ParticleContainer &pc : tau_vis_tmp){
+          if(tau_vis_tmp.parents[0] == parents[i]){tmp_tau_comp.push_back(pc); }
         }
-        tau_vis_comp.append(tmp_tau);
+        tau_vis_comp.push_back(ParticleContainer(tmp_tau_comp));
       }
 
       // sum 4-vecs of tau componants to get combined tau
-      for(const Particles &tau_particles : tau_vis_tmp){
-        Particle comb_tau = tau_particles[0].momentum();
+      for(const ParticleContainer &tau_particles : tau_vis_tmp){
+        ParticleContainer comb_tau = tau_particles[0];
         for(int i{1}; i<tau_particles.size(); i++){
-          comb_tau += tau_particles[i].momentum()
+          comb_tau += tau_particles[i]
         }
-        tau_vis.append(tau_comb);
+        tau_vis.push_back(tau_comb);
       }
 
       //=================== Choosing and sorting reconstructed Leptons ===================//
@@ -326,13 +459,20 @@ namespace Rivet {
       {
           for (unsigned int j{0}; j < non_tau_leps.size(); j++)
           {
-            if(i != j) && deltaR(non_tau_leps[i].momentum(), non_tau_leps[j].momentum()) < 0.2) { recon_leptons.push_back(non_tau_leps[i]); }
+
+            double y1   = non_tau_leps[j].momentum.rapidity;
+            double y2   = non_tau_leps[i].momentum.rapidity;
+            double phi1 = non_tau_leps[j].momentum.phi;
+            double phi2 = non_tau_leps[i].momentum.phi;
+            double delR = calc_deltaR(y1, y2, phi1, phi2);
+
+            if(i != j && delR < 0.2) { recon_leptons.push_back(non_tau_leps[i]); }
           }
         }
 
       // // Combine reco leps with taus (if any)
       // for(const Particle &p : tau_vis){
-      //   recon_leps.append(p)
+      //   recon_leps.push_back(p)
       // }
 
       //Sort the leptons by pT
@@ -363,8 +503,8 @@ namespace Rivet {
 
       //=================== Calculating Missing Transverse Energy (MET) ===================//
 
-      const double MET = apply<MissingMomentum>(event, "missing_et").vectorEt().mod();
-      const double MET_smeared_atlas = apply<SmearedMET>(event, "met_smeared_atlas").vectorEt().mod();
+      Particle MET_proj = apply<MissingMomentum>(event, "missing_et"); //.vectorEt().mod();
+      Particle MET_smeared_atlas_proj = apply<SmearedMET>(event, "met_smeared_atlas"); //.vectorEt().mod();
 
       const double eTmiss = pTmiss.pT();
 
@@ -372,39 +512,40 @@ namespace Rivet {
 
       // write 4-momentum to file
       for(const Particle &p : recon_jets){
-        jet_pt.append(p.pT());
-        jet_rap.append(p.rapidity());
-        jet_phi.append(p.phi());
-        jet_mass.append(p.mass());
-        jet_energy.append(p.energy());
-        jet_px.append(p.px() );
-        jet_py.append(p.py());
-        jet_pz.append(p.pz());
-        jet_pid.append(p.pid());
+        jet_pt.push_back(p.pT());
+        jet_rap.push_back(p.rapidity());
+        jet_phi.push_back(p.phi());
+        jet_mass.push_back(p.mass());
+        jet_energy.push_back(p.energy());
+        jet_px.push_back(p.px() );
+        jet_py.push_back(p.py());
+        jet_pz.push_back(p.pz());
+        jet_pid.push_back(p.pid());
       }
 
       for(const Particle &p : recon_leps){
-        lep_pt.append(p.pT());
-        lep_rap.append(p.rapidity());
-        lep_phi.append(p.phi());
-        lep_mass.append(p.mass());
-        lep_energy.append(p.energy());
-        lep_px.append(p.px() );
-        lep_py.append(p.py());
-        lep_pz.append(p.pz());
-        lep_pid.append(p.pid());
+        lep_pt.push_back(p.pT());
+        lep_rap.push_back(p.rapidity());
+        lep_phi.push_back(p.phi());
+        lep_mass.push_back(p.mass());
+        lep_energy.push_back(p.energy());
+        lep_px.push_back(p.px() );
+        lep_py.push_back(p.py());
+        lep_pz.push_back(p.pz());
+        lep_pid.push_back(p.pid());
       }
 
       for(const Particle &p : tau_vis){
-        tau_pt.append(p.pT());
-        tau_rap.append(p.rapidity());
-        tau_phi.append(p.phi());
-        tau_mass.append(p.mass());
-        tau_energy.append(p.energy());
-        tau_px.append(p.px() );
-        tau_py.append(p.py());
-        tau_pz.append(p.pz());
-        tau_pid.append(p.pid());
+        tau_pt.push_back(p.momentum.pT);
+        tau_rap.push_back(p.momentum.rapidity);
+        tau_phi.push_back(p.momentum.phi);
+        tau_phi.push_back(p.momentum.phi);
+        tau_mass.push_back(p.momentum.mass);
+        tau_energy.push_back(p.momentum.energy);
+        tau_px.push_back(p.momentum.px);
+        tau_py.push_back(p.momentum.py);
+        tau_pz.push_back(p.momentum.pz);
+        tau_pid.push_back(p.pid());
       }
 
       for(const Particle &t : tau_vis_comp){
@@ -419,71 +560,68 @@ namespace Rivet {
         std::vector<long>  tmp_tau_comp_pid;
 
         for(const Particle &p : t){
-          tmp_tau_comp_pt.append(p.pT());
-          tmp_tau_comp_rap.append(p.rapidity());
-          tmp_tau_comp_phi.append(p.phi());
-          tmp_tau_comp_mass.append(p.mass());
-          tmp_tau_comp_energy.append(p.energy());
-          tmp_tau_comp_px.append(p.px() );
-          tmp_tau_comp_py.append(p.py());
-          tmp_tau_comp_pz.append(p.pz());
-          tmp_tau_comp_pid.append(p.pid());
+          tmp_tau_comp_pt.push_back(p.momentum);
+          tmp_tau_comp_rap.push_back(p.momentum.rapidity);
+          tmp_tau_comp_phi.push_back(p.momentum.phi);
+          tmp_tau_comp_mass.push_back(p.momentum.mass);
+          tmp_tau_comp_energy.push_back(p.momentum.energy);
+          tmp_tau_comp_px.push_back(p.momentum.px);
+          tmp_tau_comp_py.push_back(p.momentum.py);
+          tmp_tau_comp_pz.push_back(p.momentum.pz);
+          tmp_tau_comp_pid.push_back(p.pid);
         }
-        tau_comp_pt.append(tmp_tau_comp_pt)
-        tau_comp_rap.append(tmp_tau_comp_rap)
-        tau_comp_phi.append(tmp_tau_comp_phi)
-        tau_comp_mass.append(tmp_tau_comp_mass)
-        tau_comp_energy.append(tmp_tau_comp_energy)
-        tau_comp_px.append(tmp_tau_comp_px)
-        tau_comp_py.append(tmp_tau_comp_py)
-        tau_comp_pz.append(tmp_tau_comp_pz)
-        tau_comp_pid.append(tmp_tau_comp_pid)
+        tau_comp_pt.push_back(tmp_tau_comp_pt);
+        tau_comp_rap.push_back(tmp_tau_comp_rap);
+        tau_comp_phi.push_back(tmp_tau_comp_phi);
+        tau_comp_mass.push_back(tmp_tau_comp_mass);
+        tau_comp_energy.push_back(tmp_tau_comp_energy);
+        tau_comp_px.push_back(tmp_tau_comp_px);
+        tau_comp_py.push_back(tmp_tau_comp_py);
+        tau_comp_pz.push_back(tmp_tau_comp_pz);
+        tau_comp_pid.push_back(tmp_tau_comp_pid);
       }
 
       for(const Particle &p : neutrinos){
-        nu_pt.append(p.pT());
-        nu_rap.append(p.rapidity());
-        nu_phi.append(p.phi());
-        nu_mass.append(p.mass());
-        nu_energy.append(p.energy());
-        nu_px.append(p.px() );
-        nu_py.append(p.py());
-        nu_pz.append(p.pz());
-        nu_pid.append(p.pid());
+        nu_pt.push_back(p.pT());
+        nu_rap.push_back(p.rapidity());
+        nu_phi.push_back(p.phi());
+        nu_mass.push_back(p.mass());
+        nu_energy.push_back(p.energy());
+        nu_px.push_back(p.px() );
+        nu_py.push_back(p.py());
+        nu_pz.push_back(p.pz());
+        nu_pid.push_back(p.pid());
       }
 
-      for(const Particle &p : tau_vis){
-        tau_pt.append(p.pT());
-        tau_rap.append(p.rapidity());
-        tau_phi.append(p.phi());
-        tau_mass.append(p.mass());
-        tau_energy.append(p.energy());
-        tau_px.append(p.px() );
-        tau_py.append(p.py());
-        tau_pz.append(p.pz());
-      }
+      // for(const Particle &p : tau_vis){
+      //   tau_pt.push_back(p.pT());
+      //   tau_rap.push_back(p.rapidity());
+      //   tau_phi.push_back(p.phi());
+      //   tau_mass.push_back(p.mass());
+      //   tau_energy.push_back(p.energy());
+      //   tau_px.push_back(p.px() );
+      //   tau_py.push_back(p.py());
+      //   tau_pz.push_back(p.pz());
+      // }
 
-      const double MET = apply<MissingMomentum>(event, "missing_et");
-      const double ATLAS_smeared_MET = apply<SmearedMET>(event, "met_smeared_atlas");
+      MET_pt =  MET_proj.pT();
+      MET_rap = MET_proj.rapidity();
+      MET_phi = MET_proj.phi();
+      MET =     MET_proj.vectorEt().mod();
+      MET_px =  MET_proj.px();
+      MET_py =  MET_proj.py();
+      MET_pz =  MET_proj.pz();
 
-      MET_pt = MET.pT();
-      MET_rap = MET.rapidity();
-      MET_phi = MET.phi();
-      MET = MET.vectorEt().mod();
-      MET_px = MET.px();
-      MET_py = MET.py();
-      MET_pz = MET.pz();
-
-      ATLAS_smeared_MET_pt =  ATLAS_smeared_MET.pT();
-      ATLAS_smeared_MET_rap = ATLAS_smeared_MET.rapidity();
-      ATLAS_smeared_MET_phi = ATLAS_smeared_MET.phi();
-      ATLAS_smeared_MET =     ATLAS_smeared_MET.vectorEt().mod();
-      ATLAS_smeared_MET_px =  ATLAS_smeared_MET.px();
-      ATLAS_smeared_MET_py =  ATLAS_smeared_MET.py();
-      ATLAS_smeared_MET_pz =  ATLAS_smeared_MET.pz();
+      ATLAS_smeared_MET_pt  = MET_smeared_atlas_proj.pT();
+      ATLAS_smeared_MET_rap = MET_smeared_atlas_proj.rapidity();
+      ATLAS_smeared_MET_phi = MET_smeared_atlas_proj.phi();
+      ATLAS_smeared_MET     = MET_smeared_atlas_proj.vectorEt().mod();
+      ATLAS_smeared_MET_px =  MET_smeared_atlas_proj.px();
+      ATLAS_smeared_MET_py =  MET_smeared_atlas_proj.py();
+      ATLAS_smeared_MET_pz =  MET_smeared_atlas_proj.pz();
 
       survive_event_number++;
-      OutputTree.Fill();
+      OutputTree->Fill();
     }
 
     //================================================================================//
@@ -530,164 +668,118 @@ namespace Rivet {
       sum_of_weights_err      =  err_sumW;           
       fid_sum_of_weights      =  fid_sumW;
       fid_sum_of_weights_err  =  err_fid_sumW;
-      fid_xs                  =  fid_xs;
+      xs_fid                  =  fid_xs;
       fid_xs_err              =  err_fid_xs;   
       nsurvive_events         =  survive_event_number;        
       ninit_events            =  event_number;
       presel_eff              =  survive_event_number / event_number * 100;   
 
-      MetaDataTree.Fill()
+      MetaDataTree->Fill();
+      OutputFile->Close();
+      delete OutputFile;
+      delete MetaDataTree;
+      delete OutputTree;
+
+
+      
 
     }
 
   private:
 
     // Output file
-    TFile OutputFile(TFile::open("output.root"))
+    // TFile OutputFile(TFile.Open("output.root"));
+    // std::unique_ptr<TFile> OutputFile(TFile::Open("output.root", "RECREATE"));
+    TFile *OutputFile; // = TFile::Open("output.root", "RECREATE");
+    TTree *OutputTree; //("tree", "tree");
+    TTree *MetaDataTree; //("metadata", "metadata");
 
-    TTree OutputTree("tree", "tree")
-    TTree MetaDataTree("metadata", "metadata")
-
-    std::vector<float> jet_pt;
-    std::vector<float> jet_rap;
-    std::vector<float> jet_phi;
-    std::vector<float> jet_mass;
-    std::vector<float> jet_energy;
-    std::vector<float> jet_px;
-    std::vector<float> jet_py;
-    std::vector<float> jet_pz;
+  private:
+    std::vector<double> jet_pt;
+    std::vector<double> jet_rap;
+    std::vector<double> jet_phi;
+    std::vector<double> jet_mass;
+    std::vector<double> jet_energy;
+    std::vector<double> jet_px;
+    std::vector<double> jet_py;
+    std::vector<double> jet_pz;
     std::vector<long>  jet_pid;
 
-    std::vector<float> lep_pt;
-    std::vector<float> lep_rap;
-    std::vector<float> lep_phi;
-    std::vector<float> lep_mass;
-    std::vector<float> lep_energy;
-    std::vector<float> lep_px;
-    std::vector<float> lep_py;
-    std::vector<float> lep_pz;
+    std::vector<double> lep_pt;
+    std::vector<double> lep_rap;
+    std::vector<double> lep_phi;
+    std::vector<double> lep_mass;
+    std::vector<double> lep_energy;
+    std::vector<double> lep_px;
+    std::vector<double> lep_py;
+    std::vector<double> lep_pz;
     std::vector<long>  lep_pid;
 
-    std::vector<std::vector<float>> tau_comp_pt;
-    std::vector<std::vector<float>> tau_comp_rap;
-    std::vector<std::vector<float>> tau_comp_phi;
-    std::vector<std::vector<float>> tau_comp_mass;
-    std::vector<std::vector<float>> tau_comp_energy;
-    std::vector<std::vector<float>> tau_comp_px;
-    std::vector<std::vector<float>> tau_comp_py;
-    std::vector<std::vector<float>> tau_comp_pz;
+    std::vector<std::vector<double>> tau_comp_pt;
+    std::vector<std::vector<double>> tau_comp_rap;
+    std::vector<std::vector<double>> tau_comp_phi;
+    std::vector<std::vector<double>> tau_comp_mass;
+    std::vector<std::vector<double>> tau_comp_energy;
+    std::vector<std::vector<double>> tau_comp_px;
+    std::vector<std::vector<double>> tau_comp_py;
+    std::vector<std::vector<double>> tau_comp_pz;
     std::vector<std::vector<long>>  tau_comp_pid;
 
-    std::vector<std::vector<float>> tau_pt;
-    std::vector<std::vector<float>> tau_rap;
-    std::vector<std::vector<float>> tau_phi;
-    std::vector<std::vector<float>> tau_mass;
-    std::vector<std::vector<float>> tau_energy;
-    std::vector<std::vector<float>> tau_px;
-    std::vector<std::vector<float>> tau_py;
-    std::vector<std::vector<float>> tau_pz;
+    std::vector<double> tau_pt;
+    std::vector<double> tau_rap;
+    std::vector<double> tau_phi;
+    std::vector<double> tau_mass;
+    std::vector<double> tau_energy;
+    std::vector<double> tau_pid;
+    std::vector<double> tau_px;
+    std::vector<double> tau_py;
+    std::vector<double> tau_pz;
 
-    std::vector<float> nu_pt;
-    std::vector<float> nu_rap;
-    std::vector<float> nu_phi;
-    std::vector<float> nu_mass;
-    std::vector<float> nu_energy;
-    std::vector<float> nu_px;
-    std::vector<float> nu_py;
-    std::vector<float> nu_pz;
+    std::vector<double> nu_pt;
+    std::vector<double> nu_rap;
+    std::vector<double> nu_phi;
+    std::vector<double> nu_mass;
+    std::vector<double> nu_energy;
+    std::vector<double> nu_px;
+    std::vector<double> nu_py;
+    std::vector<double> nu_pz;
     std::vector<long>  nu_pid;
 
-    std::vector<float> MET_pt;
-    std::vector<float> MET_rap;
-    std::vector<float> MET_phi;
-    std::vector<float> MET;
-    std::vector<float> MET_px;
-    std::vector<float> MET_py;
-    std::vector<float> MET_pz;
+    double MET_pt;
+    double MET_rap;
+    double MET_phi;
+    double MET;
+    double MET_px;
+    double MET_py;
+    double MET_pz;
 
-    std::vector<float> ATLAS_smeared_MET_pt;
-    std::vector<float> ATLAS_smeared_MET_rap;
-    std::vector<float> ATLAS_smeared_MET_phi;
-    std::vector<float> ATLAS_smeared_MET;
-    std::vector<float> ATLAS_smeared_MET_px;
-    std::vector<float> ATLAS_smeared_MET_py;
-    std::vector<float> ATLAS_smeared_MET_pz;
+    double ATLAS_smeared_MET_pt;
+    double ATLAS_smeared_MET_rap;
+    double ATLAS_smeared_MET_phi;
+    double ATLAS_smeared_MET;
+    double ATLAS_smeared_MET_px;
+    double ATLAS_smeared_MET_py;
+    double ATLAS_smeared_MET_pz;
 
-    std::vector<std::vector<float>> met_p4;
+    std::vector<std::vector<double>> met_p4;
 
-    OutputTree.Branch("jet_pt",     &jet_pt,     "jet_pt/F");
-    OutputTree.Branch("jet_rap",    &jet_rap,    "jet_rap/F");
-    OutputTree.Branch("jet_phi",    &jet_pt,     "jet_phi/F");
-    OutputTree.Branch("jet_mass",   &jet_mass,   "jet_mass/F");
-    OutputTree.Branch("jet_energy", &jet_energy, "jet_energy/F");
-    OutputTree.Branch("jet_px",     &jet_px,     "jet_px/F");
-    OutputTree.Branch("jet_py",     &jet_py,     "jet_py/F");
-    OutputTree.Branch("jet_pz",     &jet_pz,     "jet_pz/F");
-    OutputTree.Branch("jet_pid",    &jet_pid,    "jet_pid/L");
-
-    OutputTree.Branch("lep_pt",     &lep_pt,     "lep_pt/F");
-    OutputTree.Branch("lep_rap",    &lep_rap,    "lep_rap/F");
-    OutputTree.Branch("lep_phi",    &lep_pt,     "lep_phi/F");
-    OutputTree.Branch("lep_mass",   &lep_mass,   "lep_mass/F");
-    OutputTree.Branch("lep_energy", &lep_energy, "lep_energy/F");
-    OutputTree.Branch("lep_px",     &lep_px,     "lep_px/F");
-    OutputTree.Branch("lep_py",     &lep_py,     "lep_py/F");
-    OutputTree.Branch("lep_pz",     &lep_pz,     "lep_pz/F");
-    OutputTree.Branch("lep_pid",    &lep_pid,    "lep_pid/L");
-
-    OutputTree.Branch("tau_pt",     &tau_pt,     "tau_pt/F");
-    OutputTree.Branch("tau_rap",    &tau_rap,    "tau_rap/F");
-    OutputTree.Branch("tau_phi",    &tau_pt,     "tau_phi/F");
-    OutputTree.Branch("tau_mass",   &tau_mass,   "tau_mass/F");
-    OutputTree.Branch("tau_energy", &tau_energy, "tau_energy/F");
-    OutputTree.Branch("tau_px",     &tau_px,     "tau_px/F");
-    OutputTree.Branch("tau_py",     &tau_py,     "tau_py/F");
-    OutputTree.Branch("tau_pz",     &tau_pz,     "tau_pz/F");
-    OutputTree.Branch("tau_pid",    &tau_pid,    "tau_pid/L");
-
-    OutputTree.Branch("tau_comp_pt",     &tau_comp_pt,     "tau_comp_pt/F");
-    OutputTree.Branch("tau_comp_rap",    &tau_comp_rap,    "tau_comp_rap/F");
-    OutputTree.Branch("tau_comp_phi",    &tau_comp_pt,     "tau_comp_phi/F");
-    OutputTree.Branch("tau_comp_mass",   &tau_comp_mass,   "tau_comp_mass/F");
-    OutputTree.Branch("tau_comp_energy", &tau_comp_energy, "tau_comp_energy/F");
-    OutputTree.Branch("tau_comp_px",     &tau_comp_px,     "tau_comp_px/F");
-    OutputTree.Branch("tau_comp_py",     &tau_comp_py,     "tau_comp_py/F");
-    OutputTree.Branch("tau_comp_pz",     &tau_comp_pz,     "tau_comp_pz/F");
-    OutputTree.Branch("tau_comp_pid",    &tau_comp_pid,    "tau_comp_pid/L");
-
-    OutputTree.Branch("MET_pt",     &MET_pt,  "MET_pt/F");
-    OutputTree.Branch("MET_rap",    &MET_rap, "MET_rap/F");
-    OutputTree.Branch("MET_phi",    &MET_pt,  "MET_phi/F");
-    OutputTree.Branch("MET",        &MET,     "MET/F");
-    OutputTree.Branch("MET_px",     &MET_px,  "MET_px/F");
-    OutputTree.Branch("MET_py",     &MET_py,  "MET_py/F");
-    OutputTree.Branch("MET_pz",     &MET_pz,  "MET_pz/F");
-
-    OutputTree.Branch("ATLAS_smeared_MET_pt",     &ATLAS_smeared_MET_pt,  "ATLAS_smeared_MET_pt/F");
-    OutputTree.Branch("ATLAS_smeared_MET_rap",    &ATLAS_smeared_MET_rap, "ATLAS_smeared_MET_rap/F");
-    OutputTree.Branch("ATLAS_smeared_MET_phi",    &ATLAS_smeared_MET_pt,  "ATLAS_smeared_MET_phi/F");
-    OutputTree.Branch("ATLAS_smeared_MET",        &ATLAS_smeared_MET,     "ATLAS_smeared_MET/F");
-    OutputTree.Branch("ATLAS_smeared_MET_px",     &ATLAS_smeared_MET_px,  "ATLAS_smeared_MET_px/F");
-    OutputTree.Branch("ATLAS_smeared_MET_py",     &ATLAS_smeared_MET_py,  "ATLAS_smeared_MET_py/F");
-    OutputTree.Branch("ATLAS_smeared_MET_pz",     &ATLAS_smeared_MET_pz,  "ATLAS_smeared_MET_pz/F");
-
-    MetaDataTree.Branch("total_xs",               &xs_total,              "total_xs_madgraph/F");
-    MetaDataTree.Branch("total_xs_error",         &xs_total_err,          "total_xs_error/F");
-    MetaDataTree.Branch("sum_of_weights",         &sum_of_weights,         "sum_of_weights/F");
-    MetaDataTree.Branch("sum_of_weights_err",     &sum_of_weights_err,     "sum_of_weights_err/F");
-    MetaDataTree.Branch("fid_sum_of_weights",     &fid_sum_of_weights,     "fid_sum_of_weights/F");
-    MetaDataTree.Branch("fid_sum_of_weights_err", &fid_sum_of_weights_err, "fid_sum_of_weights_err/F");
-    MetaDataTree.Branch("fid_xs",                 &fid_xs,                 "fid_xs/F");
-    MetaDataTree.Branch("fid_xs_err",             &fid_xs_err,             "fid_xs_err/F");
-    MetaDataTree.Branch("nsurvive_events",        &nsurvive_events,        "nsurvive_events/F");
-    MetaDataTree.Branch("ninit_events",           &ninit_events,           "ninit_events/F");
-    MetaDataTree.Branch("presel_eff",             &presel_eff,             "preself_eff/F");
+    double xs_total;
+    double xs_total_err;
+    double sum_of_weights;
+    double sum_of_weights_err;
+    double fid_sum_of_weights;
+    double fid_sum_of_weights_err;
+    double xs_fid;
+    double fid_xs_err;
+    double nsurvive_events;
+    double ninit_events;
+    double presel_eff;
 
     int SMEAR;
     bool MET_SMEAR;
     bool JET_SMEAR;
     bool MUON_SMEAR;
-    
+
     /// @name Histograms
     //@{
     std::map<string, Histo1DPtr> _h;
