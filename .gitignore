@@ -12,4 +12,9 @@ outputs/*
 *.so
 *.tmp*
 *.__afs*
+*.yoda
+*.log
+log.*
+*.lhe*
+*.hepmc
 
