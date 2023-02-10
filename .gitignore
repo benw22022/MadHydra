@@ -9,5 +9,7 @@ outputs/*
 *.json
 *.save
 *asetup*
-
+*.so
+*.tmp*
+*.__afs*
 
