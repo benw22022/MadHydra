@@ -5,30 +5,16 @@
 //Rivet analysis code that runs over our data [signal + background] and applies cuts
 
 //=================================  Libraries  =================================//
-#include <iostream>
-#include <fstream>
-#include <ostream>
-#include <cmath>
-#include <map>
 #include "Rivet/Analysis.hh"
-#include "Rivet/Tools/BinnedHistogram.hh"
 #include "Rivet/Projections/FinalState.hh"
-#include "Rivet/Projections/DressedLeptons.hh"
 #include "Rivet/Projections/ChargedFinalState.hh"
 #include "Rivet/Projections/VisibleFinalState.hh"
+#include "Rivet/Projections/VetoedFinalState.hh"
 #include "Rivet/Projections/IdentifiedFinalState.hh"
 #include "Rivet/Projections/UnstableParticles.hh"
 #include "Rivet/Projections/FastJets.hh"
-#include "Rivet/Projections/MissingMomentum.hh"
-#include "Rivet/Projections/VetoedFinalState.hh"
-#include "Rivet/Projections/SmearedJets.hh"
-#include "Rivet/Projections/SmearedParticles.hh"
-#include "Rivet/Projections/SmearedMET.hh"
-#include "Rivet/Math/MathUtils.hh"
-#include "Rivet/Analyses/MC_JetAnalysis.hh"
 #include "TFile.h"
 #include "TTree.h"
-
 #include <math.h>
 
 //==========================================================================//
@@ -36,38 +22,6 @@
 //==========================================================================//
 
 namespace Rivet {
-
-  struct ParticleContainer{
-
-    FourMomentum momentum; 
-    long   pid;
-    bool   from_tau;
-    Particles parents;
-
-    ParticleContainer(){}
-
-    ParticleContainer(const Particle& p){
-      momentum = p.momentum();
-      from_tau = p.fromTau();
-      parents = p.parents();
-    }
-
-    ParticleContainer(const Jet& j){
-      momentum = j.momentum();
-      from_tau = j.tauTagged();
-    
-    }
-
-    ParticleContainer& operator+(const ParticleContainer& other){
-
-      if (this == &other){  return *this;}
-
-      this->momentum = this->momentum + other.momentum;
-
-      return *this;
-    }
-
-  };
   
 
   //divided into constructor + 3 loops: init, analyze and finalize
@@ -80,11 +34,6 @@ namespace Rivet {
     public:
 
       double calc_deltaR(const double& y1, const double& y2, const double& phi1, const double& phi2){
-
-      // double y1 = p1.momentum.rapidity();
-      // double y2 = p2.momentum.rapidity();
-      // double phi1 = p1.momentum.phi();
-      // double phi2 = p2.momentum.phi();
 
       return sqrt(pow((y1 - y2), 2) + pow((phi1 - phi2), 2));
 
@@ -105,6 +54,76 @@ namespace Rivet {
       int survive_event_number = 0;
       int num_events_before_a_cut=0;
       int num_events_after_a_cut=0;
+
+      // Output file
+      TFile *m_OutputFile;
+      TTree *m_OutputTree;
+      TTree *m_MetaDataTree;
+      bool m_has_finalized{false};
+
+      std::vector<double> b_jet_pt;
+      std::vector<double> b_jet_rap;
+      std::vector<double> b_jet_phi;
+      std::vector<double> b_jet_mass;
+      std::vector<double> b_jet_energy;
+      std::vector<double> b_jet_px;
+      std::vector<double> b_jet_py;
+      std::vector<double> b_jet_pz;
+
+      std::vector<double> b_lep_pt;
+      std::vector<double> b_lep_rap;
+      std::vector<double> b_lep_phi;
+      std::vector<double> b_lep_mass;
+      std::vector<double> b_lep_energy;
+      std::vector<double> b_lep_px;
+      std::vector<double> b_lep_py;
+      std::vector<double> b_lep_pz;
+      std::vector<long>   b_lep_pid;
+
+      std::vector<double> b_tau_pt;
+      std::vector<double> b_tau_rap;
+      std::vector<double> b_tau_phi;
+      std::vector<double> b_tau_mass;
+      std::vector<double> b_tau_energy;
+      std::vector<double> b_tau_pid;
+      std::vector<double> b_tau_px;
+      std::vector<double> b_tau_py;
+      std::vector<double> b_tau_pz;
+
+      std::vector<double> b_nu_pt;
+      std::vector<double> b_nu_rap;
+      std::vector<double> b_nu_phi;
+      std::vector<double> b_nu_mass;
+      std::vector<double> b_nu_energy;
+      std::vector<double> b_nu_px;
+      std::vector<double> b_nu_py;
+      std::vector<double> b_nu_pz;
+      std::vector<long>   b_nu_pid;
+
+      double b_HTlep;
+      double b_HTjets;
+      double b_eTmiss;
+      double b_meff;
+
+      double b_total_xs;
+      double b_err_xs_mg;
+      double b_sumW;
+      double b_err_sumW;
+      double b_fid_sumW;
+      double b_err_fid_sumW;
+      double b_fid_xs;
+      double b_err_fid_xs;
+      double b_survive_event_number;
+      double b_event_number;
+      double b_presel_eff;
+
+      int SMEAR;
+      bool MET_SMEAR;
+      bool JET_SMEAR;
+      bool MUON_SMEAR;
+
+      bool _use_fiducial_lepton_efficiency;
+
       //=================================  Declaring global functions  =================================//
 
       //====================================================================================//
@@ -122,102 +141,92 @@ namespace Rivet {
         MUON_SMEAR = 1;
 
         // Output file
-        OutputFile = new TFile("output.root", "RECREATE");
-        OutputTree = new TTree("tree", "tree");
-        MetaDataTree = new TTree("metadata", "metadata");
+        m_OutputFile = new TFile("output.root", "RECREATE");
+        m_OutputTree = new TTree("tree", "tree");
+        m_MetaDataTree = new TTree("metadata", "metadata");
+        m_OutputFile->cd();
 
-        OutputTree->Branch("jet_pt",     &jet_pt,     "jet_pt/F");
-        OutputTree->Branch("jet_rap",    &jet_rap,    "jet_rap/F");
-        OutputTree->Branch("jet_phi",    &jet_pt,     "jet_phi/F");
-        OutputTree->Branch("jet_mass",   &jet_mass,   "jet_mass/F");
-        OutputTree->Branch("jet_energy", &jet_energy, "jet_energy/F");
-        OutputTree->Branch("jet_px",     &jet_px,     "jet_px/F");
-        OutputTree->Branch("jet_py",     &jet_py,     "jet_py/F");
-        OutputTree->Branch("jet_pz",     &jet_pz,     "jet_pz/F");
-        OutputTree->Branch("jet_pid",    &jet_pid,    "jet_pid/L");
+        m_OutputTree->Branch("jet_pt",     &b_jet_pt    );
+        m_OutputTree->Branch("jet_rap",    &b_jet_rap   );
+        m_OutputTree->Branch("jet_phi",    &b_jet_pt    );
+        m_OutputTree->Branch("jet_mass",   &b_jet_mass  );
+        m_OutputTree->Branch("jet_energy", &b_jet_energy );
+        m_OutputTree->Branch("jet_px",     &b_jet_px    );
+        m_OutputTree->Branch("jet_py",     &b_jet_py    );
+        m_OutputTree->Branch("jet_pz",     &b_jet_pz    );
 
-        OutputTree->Branch("lep_pt",     &lep_pt,     "lep_pt/F");
-        OutputTree->Branch("lep_rap",    &lep_rap,    "lep_rap/F");
-        OutputTree->Branch("lep_phi",    &lep_pt,     "lep_phi/F");
-        OutputTree->Branch("lep_mass",   &lep_mass,   "lep_mass/F");
-        OutputTree->Branch("lep_energy", &lep_energy, "lep_energy/F");
-        OutputTree->Branch("lep_px",     &lep_px,     "lep_px/F");
-        OutputTree->Branch("lep_py",     &lep_py,     "lep_py/F");
-        OutputTree->Branch("lep_pz",     &lep_pz,     "lep_pz/F");
-        OutputTree->Branch("lep_pid",    &lep_pid,    "lep_pid/L");
+        m_OutputTree->Branch("lep_pt",     &b_lep_pt    );
+        m_OutputTree->Branch("lep_rap",    &b_lep_rap   );
+        m_OutputTree->Branch("lep_phi",    &b_lep_pt    );
+        m_OutputTree->Branch("lep_mass",   &b_lep_mass  );
+        m_OutputTree->Branch("lep_energy", &b_lep_energy);
+        m_OutputTree->Branch("lep_px",     &b_lep_px    );
+        m_OutputTree->Branch("lep_py",     &b_lep_py    );
+        m_OutputTree->Branch("lep_pz",     &b_lep_pz    );
+        m_OutputTree->Branch("lep_pid",    &b_lep_pid   );
 
-        OutputTree->Branch("tau_pt",     &tau_pt,     "tau_pt/F");
-        OutputTree->Branch("tau_rap",    &tau_rap,    "tau_rap/F");
-        OutputTree->Branch("tau_phi",    &tau_pt,     "tau_phi/F");
-        OutputTree->Branch("tau_mass",   &tau_mass,   "tau_mass/F");
-        OutputTree->Branch("tau_energy", &tau_energy, "tau_energy/F");
-        OutputTree->Branch("tau_px",     &tau_px,     "tau_px/F");
-        OutputTree->Branch("tau_py",     &tau_py,     "tau_py/F");
-        OutputTree->Branch("tau_pz",     &tau_pz,     "tau_pz/F");
-        OutputTree->Branch("tau_pid",    &tau_pid,    "tau_pid/L");
+        m_OutputTree->Branch("tau_pt",     &b_tau_pt    );
+        m_OutputTree->Branch("tau_rap",    &b_tau_rap   );
+        m_OutputTree->Branch("tau_phi",    &b_tau_pt    );
+        m_OutputTree->Branch("tau_mass",   &b_tau_mass  );
+        m_OutputTree->Branch("tau_energy", &b_tau_energy);
+        m_OutputTree->Branch("tau_px",     &b_tau_px    );
+        m_OutputTree->Branch("tau_py",     &b_tau_py    );
+        m_OutputTree->Branch("tau_pz",     &b_tau_pz    );
+        m_OutputTree->Branch("tau_pid",    &b_tau_pid   );
 
-        OutputTree->Branch("tau_comp_pt",     &tau_comp_pt,     "tau_comp_pt/F");
-        OutputTree->Branch("tau_comp_rap",    &tau_comp_rap,    "tau_comp_rap/F");
-        OutputTree->Branch("tau_comp_phi",    &tau_comp_pt,     "tau_comp_phi/F");
-        OutputTree->Branch("tau_comp_mass",   &tau_comp_mass,   "tau_comp_mass/F");
-        OutputTree->Branch("tau_comp_energy", &tau_comp_energy, "tau_comp_energy/F");
-        OutputTree->Branch("tau_comp_px",     &tau_comp_px,     "tau_comp_px/F");
-        OutputTree->Branch("tau_comp_py",     &tau_comp_py,     "tau_comp_py/F");
-        OutputTree->Branch("tau_comp_pz",     &tau_comp_pz,     "tau_comp_pz/F");
-        OutputTree->Branch("tau_comp_pid",    &tau_comp_pid,    "tau_comp_pid/L");
-
-        OutputTree->Branch("MET_pt",     &MET_pt,  "MET_pt/F");
-        OutputTree->Branch("MET_rap",    &MET_rap, "MET_rap/F");
-        OutputTree->Branch("MET_phi",    &MET_pt,  "MET_phi/F");
-        OutputTree->Branch("MET",        &MET,     "MET/F");
-        OutputTree->Branch("MET_px",     &MET_px,  "MET_px/F");
-        OutputTree->Branch("MET_py",     &MET_py,  "MET_py/F");
-        OutputTree->Branch("MET_pz",     &MET_pz,  "MET_pz/F");
-
-        OutputTree->Branch("ATLAS_smeared_MET_pt",     &ATLAS_smeared_MET_pt,  "ATLAS_smeared_MET_pt/F");
-        OutputTree->Branch("ATLAS_smeared_MET_rap",    &ATLAS_smeared_MET_rap, "ATLAS_smeared_MET_rap/F");
-        OutputTree->Branch("ATLAS_smeared_MET_phi",    &ATLAS_smeared_MET_pt,  "ATLAS_smeared_MET_phi/F");
-        OutputTree->Branch("ATLAS_smeared_MET",        &ATLAS_smeared_MET,     "ATLAS_smeared_MET/F");
-        OutputTree->Branch("ATLAS_smeared_MET_px",     &ATLAS_smeared_MET_px,  "ATLAS_smeared_MET_px/F");
-        OutputTree->Branch("ATLAS_smeared_MET_py",     &ATLAS_smeared_MET_py,  "ATLAS_smeared_MET_py/F");
-        OutputTree->Branch("ATLAS_smeared_MET_pz",     &ATLAS_smeared_MET_pz,  "ATLAS_smeared_MET_pz/F");
-
-        MetaDataTree->Branch("total_xs",               &xs_total,              "total_xs_madgraph/F");
-        MetaDataTree->Branch("total_xs_error",         &xs_total_err,          "total_xs_error/F");
-        MetaDataTree->Branch("sum_of_weights",         &sum_of_weights,         "sum_of_weights/F");
-        MetaDataTree->Branch("sum_of_weights_err",     &sum_of_weights_err,     "sum_of_weights_err/F");
-        MetaDataTree->Branch("fid_sum_of_weights",     &fid_sum_of_weights,     "fid_sum_of_weights/F");
-        MetaDataTree->Branch("fid_sum_of_weights_err", &fid_sum_of_weights_err, "fid_sum_of_weights_err/F");
-        MetaDataTree->Branch("fid_xs",                 &xs_fid,                 "fid_xs/F");
-        MetaDataTree->Branch("fid_xs_err",             &fid_xs_err,             "fid_xs_err/F");
-        MetaDataTree->Branch("nsurvive_events",        &nsurvive_events,        "nsurvive_events/F");
-        MetaDataTree->Branch("ninit_events",           &ninit_events,           "ninit_events/F");
-        MetaDataTree->Branch("presel_eff",             &presel_eff,             "preself_eff/F");
+        m_OutputTree->Branch("eTmiss",     &b_eTmiss,  "eTmiss/D");
+        m_OutputTree->Branch("HTlep",      &b_HTlep,   "HTlep/D");
+        m_OutputTree->Branch("HTjets",     &b_HTjets,  "HTjets/D");
+        m_OutputTree->Branch("meff",       &b_meff,    "meff/D");
+        
+        m_MetaDataTree->Branch("total_xs",               &b_total_xs,             "total_xs_madgraph/D");
+        m_MetaDataTree->Branch("total_xs_error",         &b_err_xs_mg,            "total_xs_error/D");
+        m_MetaDataTree->Branch("sum_of_weights",         &b_sumW,                 "sum_of_weights/D");
+        m_MetaDataTree->Branch("sum_of_weights_err",     &b_err_sumW,             "sum_of_weights_err/D");
+        m_MetaDataTree->Branch("fid_sum_of_weights",     &b_fid_sumW,             "fid_sum_of_weights/D");
+        m_MetaDataTree->Branch("fid_sum_of_weights_err", &b_err_fid_sumW,         "fid_sum_of_weights_err/D");
+        m_MetaDataTree->Branch("fid_xs",                 &b_fid_xs,               "fid_xs/D");
+        m_MetaDataTree->Branch("fid_xs_err",             &b_err_fid_xs,           "fid_xs_err/D");
+        m_MetaDataTree->Branch("nsurvive_events",        &b_survive_event_number, "nsurvive_events/D");
+        m_MetaDataTree->Branch("ninit_events",           &b_event_number,          "ninit_events/D");
+        m_MetaDataTree->Branch("presel_eff",             &b_presel_eff,            "preself_eff/D");
 
 
 
-        //=================================  General Final States Declaration  =================================//
-        // define final state
-        const FinalState fs(Cuts::abseta < 5);
+        // To calculate the acceptance without having the fiducial lepton efficiencies included, this part can be turned off
+        _use_fiducial_lepton_efficiency = true;
 
-        // define visible final states (not pT miss)
-        VisibleFinalState vfs(Cuts::abseta < 4.5);
-        declare(vfs,"vfs");
+        // Random numbers for simulation of ATLAS detector reconstruction efficiency
+        srand(160385);
 
-        // Define usable particles
-        declare(UnstableParticles(), "UFS");
+        // Final state including all charged and neutral particles
+        const FinalState fs((Cuts::etaIn(-5.0, 5.0) && Cuts::pT >=  1*GeV));
+        declare(fs, "FS");
 
-        //=================================  MET Declaration  =================================//
-        MissingMomentum missing_et(fs);
-        declare(missing_et,"missing_et");
+        // Final state including all charged particles
+        declare(ChargedFinalState(Cuts::abseta < 2.5 && Cuts::pT > 1*GeV), "CFS");
 
-        // define MET smeared with ATLAS Run2
-        SmearedMET met_smeared_atlas(missing_et, MET_SMEAR_ATLAS_RUN2);
-        declare(met_smeared_atlas,"met_smeared_atlas");
+        // Final state including all visible particles (to calculate MET, Jets etc.)
+        declare(VisibleFinalState(Cuts::abseta < 5.0), "VFS");
 
-        // define MET smeared with CMS Run2
-        SmearedMET met_smeared_cms(missing_et, MET_SMEAR_CMS_RUN2);
-        declare(met_smeared_cms,"met_smeared_cms");
+        // Final state including all AntiKt 04 Jets
+        VetoedFinalState vfs;
+        vfs.addVetoPairId(PID::MUON);
+        declare(FastJets(vfs, FastJets::ANTIKT, 0.4), "AntiKtJets04");
+
+        // Final state including all unstable particles (including taus)
+        declare(UnstableParticles(Cuts::abseta < 5.0 && Cuts::pT > 5*GeV), "UFS");
+
+        // Final state including all electrons
+        IdentifiedFinalState elecs(Cuts::abseta < 2.47 && Cuts::pT > 10*GeV);
+        elecs.acceptIdPair(PID::ELECTRON);
+        declare(elecs, "elecs");
+
+        // Final state including all muons
+        IdentifiedFinalState muons(Cuts::abseta < 2.5 && Cuts::pT > 10*GeV);
+        muons.acceptIdPair(PID::MUON);
+        declare(muons, "muons");
 
         //=================================  Photon and Neutrino Decleration  =================================//
         // define photon
@@ -229,56 +238,6 @@ namespace Rivet {
         IdentifiedFinalState neutrinos(fs);
         neutrinos.acceptNeutrinos();
         declare(neutrinos, "neutrinos");
-
-        //=================================  Muons Decleration  =================================//
-        // all Muons
-        IdentifiedFinalState muon(fs);
-        muon.acceptIdPair(PID::MUON);
-        declare(muon, "muon");
-
-        // muons that are visible in a detector 
-        VetoedFinalState vfs_muons(vfs);
-        vfs_muons.addVetoPair(PID::MUON, Cuts::abseta > 2.5);
-        declare(vfs_muons,"vfs_muons");
-
-        // define dressed muons as muons observed with a photon at radius 0.1 at  most from them
-        // DressedLeptons dressed_muons(photon, muon, 0.1, Cuts::abseta < 2.4 && Cuts::pT > 10*GeV);
-        DressedLeptons dressed_muons(photon, muon, 0.1, Cuts::abseta < 2.5 && Cuts::pT > 5*GeV);
-        declare(dressed_muons, "dressed_muons");
-
-        SmearedParticles muons_eff_smear_atlas(dressed_muons, MUON_EFF_ATLAS_RUN2, MUON_SMEAR_ATLAS_RUN2);
-        declare(muons_eff_smear_atlas, "muons_eff_smear_atlas");
-
-        //=================================  Electrons Decleration  =================================//
-        // all electrons
-        IdentifiedFinalState elec(fs);
-        elec.acceptIdPair(PID::ELECTRON);
-        declare(elec, "elec");
-
-        // electrons that are visible in a detector       
-        VetoedFinalState vfs_elecs(vfs);
-        vfs_elecs.addVetoPair(PID::ELECTRON,Cuts::abseta > 2.5);
-        declare(vfs_elecs,"vfs_elecs");
-
-        //define dressed electrons as muons observed with a photon at radius 0.1 at  most from them
-        DressedLeptons dressed_elecs(photon, elec, 0.1, Cuts::abseta < 2.4 && Cuts::pT > 10*GeV);
-        declare(dressed_elecs, "dressed_elecs");
-
-        // SmearedParticles elecs_eff_smear_atlas(dressed_elecs, ELECTRON_EFF_ATLAS_RUN2, ELECTRON_SMEAR_ATLAS_RUN2);
-        // declare(elecs_eff_smear_atlas, "elecs_eff_smear_atlas");
-
-        //=================================  Tau Decleration  =================================//
-        
-
-        //=================================  Jets Decleration  =================================//
-        
-        // use FastJet to select Jets 
-        FastJets fj(fs, FastJets::ANTIKT, 0.4);
-        declare(fj,"jets");
-
-        // define jets smeared with ATLAS Run2
-        SmearedJets jets_smeared_atlas(fj,JET_SMEAR_ATLAS_RUN2);
-        declare(jets_smeared_atlas,"jets_smeared_atlas");
       }
       //===============================================================================//
       //=================================  Analysis  =================================//
@@ -295,32 +254,8 @@ namespace Rivet {
 
         if(event_number % 1000 == 0){std::cout << "Proccessing event: " << event_number << std::endl;}
 
-        //================================= VISIBLE FINAL STATE PARTICLES IN EVENT  =================================//
+
         
-        // get visible final state particles: veto events with < 4 vfs particles
-        Particles vfs_particles = apply<VisibleFinalState>(event, "vfs").particles();
-        if (vfs_particles.size()  < 4) { vetoEvent; }
-
-        // array of leptons after applying second cut (first cut is below-->cand_electrons & cand_muons)
-        Particles recon_leptons;
-
-        // array of jets after applying first cut (pT/eta)
-        Jets cand_jets;
-
-        // array of jets after applying removing hadronic taus
-        Jets nontau_jets;
-
-        // array of jets after applying second cut (lep iso)
-        Jets recon_jets;
-
-        //define a 4-momentum array for missing pT
-        FourMomentum pTmiss;
-        FourMomentum pTmiss_muons;
-        FourMomentum pTmiss_elecs;
-
-        //define gap jets
-        FourMomentum gapjet(0., 0., 0., 0.);
-
         //=================== weight and variance ===================//
 
         //This will calculate the weight for each of the N events that rivet processes
@@ -335,156 +270,355 @@ namespace Rivet {
         var_sumW += std::pow(weight, 2);
 
         //================================= Building Candidate Leptons  -- Dressed =================================//
-        
-        //=================== Muons ===================//
-        const Particles cand_muons = apply<DressedLeptons>(event, "dressed_muons").particlesByPt(Cuts::pT > 5*GeV);
-        const Particles& smeared_muons_atlas = apply<ParticleFinder>(event, "muons_eff_smear_atlas").particlesByPt();       
-        
-        //=================== Electrons ===================//
-        const Particles cand_elecs = apply<DressedLeptons>(event, "dressed_elecs").particlesByPt( Cuts::abseta < 2.4 && Cuts::pT > 10*GeV);
-        const Particles& smeared_elecs_atlas = apply<ParticleFinder>(event, "elecs_eff_smear_atlas").particlesByPt();
-        
-        //=================== All Leptons -- Dressed ===================//
-        Particles cand_leptons;
+        // Muons
+        Particles muon_candidates;
+        const Particles charged_tracks    = apply<ChargedFinalState>(event, "CFS").particles();
+        const Particles visible_particles = apply<VisibleFinalState>(event, "VFS").particles();
+        for (const Particle& mu : apply<IdentifiedFinalState>(event, "muons").particlesByPt()) {
+          // Calculate pTCone30 variable (pT of all tracks within dR<0.3 - pT of muon itself)
+          double pTinCone = -mu.pT();
+          for (const Particle& track : charged_tracks) {
+            if (deltaR(mu.momentum(), track.momentum()) < 0.3)
+              pTinCone += track.pT();
+          }
 
-        for (unsigned int i{0}; i < cand_muons.size(); i++) { cand_leptons.push_back(cand_muons[i]); }
-        for (unsigned int i{0}; i < cand_elecs.size(); i++) { cand_leptons.push_back(cand_elecs[i]); }
+          // Calculate eTCone30 variable (pT of all visible particles within dR<0.3)
+          double eTinCone = 0.;
+          for (const Particle& visible_particle : visible_particles) {
+            if (visible_particle.abspid() != PID::MUON && inRange(deltaR(mu.momentum(), visible_particle.momentum()), 0.1, 0.3))
+              eTinCone += visible_particle.pT();
+          }
 
-        //=================== Building Candidate Neutrinos and Hadronic Neutrino Flag  ===================//
+          // Apply reconstruction efficiency and simulate reco
+          int muon_id = 13;
+          if ( mu.hasAncestor(15) || mu.hasAncestor(-15)) muon_id = 14;
+          const double eff = (_use_fiducial_lepton_efficiency) ? apply_reco_eff(muon_id, mu) : 1.0;
+          const bool keep_muon = rand()/static_cast<double>(RAND_MAX) <= eff;
 
-        //=================== Neutrinos ===================//
-        Particles neutrinos = applyProjection<IdentifiedFinalState>(event, "neutrinos").particlesByPt();
-        
-        //=================== Building Candidate Jets ===================//
-
-        // create FastJets array with FastJets projection conditions defined earlier
-        const Jets& truth_jets = apply<FastJets>(event, "jets").jetsByPt( (Cuts::abseta < 4.5) && (Cuts::pT > 20*GeV) );
-        const Jets& jets_smeared_atlas = apply<JetAlg>(event, "jets_smeared_atlas").jetsByPt( (Cuts::abseta < 4.5) && (Cuts::pT > 20*GeV) );
-
-        // defining candidate Jets based on smearing setting
-        if (SMEAR == 0) 
-        { 
-          for (unsigned int i{0}; i < truth_jets.size(); i++)  { cand_jets.push_back(truth_jets[i]); }
+          // Keep muon if pTCone30/pT < 0.15 and eTCone30/pT < 0.2 and reconstructed
+          if (keep_muon && pTinCone/mu.pT() <= 0.15 && eTinCone/mu.pT() < 0.2)
+            muon_candidates.push_back(mu);
         }
-        if (SMEAR == 1 && JET_SMEAR) 
-        { 
-          for (unsigned int i{0}; i < jets_smeared_atlas.size(); i++)  { cand_jets.push_back(jets_smeared_atlas[i]); }
+
+
+        // Electrons
+        Particles electron_candidates;
+        for (const Particle& e : apply<IdentifiedFinalState>(event, "elecs").particlesByPt()) {
+          // Neglect electrons in crack regions
+          if (inRange(e.abseta(), 1.37, 1.52)) continue;
+
+          // Calculate pTCone30 variable (pT of all tracks within dR<0.3 - pT of electron itself)
+          double pTinCone = -e.pT();
+          for (const Particle& track : charged_tracks) {
+            if (deltaR(e.momentum(), track.momentum()) < 0.3) pTinCone += track.pT();
+          }
+
+          // Calculate eTCone30 variable (pT of all visible particles (except muons) within dR<0.3)
+          double eTinCone = 0.;
+          for (const Particle& visible_particle : visible_particles) {
+            if (visible_particle.abspid() != PID::MUON && inRange(deltaR(e.momentum(), visible_particle.momentum()), 0.1, 0.3))
+              eTinCone += visible_particle.pT();
+          }
+
+          // Apply reconstruction efficiency and simulate reco
+          int elec_id = 11;
+          if (e.hasAncestor(15) || e.hasAncestor(-15)) elec_id = 12;
+          const double eff = (_use_fiducial_lepton_efficiency) ? apply_reco_eff(elec_id, e) : 1.0;
+          const bool keep_elec = rand()/static_cast<double>(RAND_MAX) <= eff;
+
+          // Keep electron if pTCone30/pT < 0.13 and eTCone30/pT < 0.2 and reconstructed
+          if (keep_elec && pTinCone/e.pT() <= 0.13 && eTinCone/e.pT() < 0.2)
+            electron_candidates.push_back(e);
         }
-          
-        // need at least two jets
-        if(cand_jets.size() < 2){ vetoEvent; }
 
-        //=================== Choosing non-hadronic Leptons ===================//
 
-        // veto leptons from hadrons      
-        Particles non_hadronic_leps;
-        for (unsigned int i{0}; i < cand_leptons.size(); i++) 
-        {
-          bool away_from_jet = true;  
-          if (cand_leptons[i].fromHadron()) {
-              away_from_jet = false;
+        // Taus
+        /// @todo This could benefit from a tau finder projection
+        Particles tau_candidates;
+        for (const Particle& tau : apply<UnstableParticles>(event, "UFS").particlesByPt()) {
+          // Only pick taus out of all unstable particles
+          if (tau.abspid() != PID::TAU) continue;
+
+          // Check that tau has decayed into daughter particles
+          /// @todo Huh? Unstable taus with no decay vtx? Can use Particle.isStable()? But why in this situation?
+          if (tau.genParticle()->end_vertex() == 0) continue;
+
+          // Calculate visible tau pT from pT of tau neutrino in tau decay for pT and |eta| cuts
+          FourMomentum daughter_tau_neutrino_momentum = get_tau_neutrino_mom(tau);
+          Particle tau_vis = tau;
+          tau_vis.setMomentum(tau.momentum()-daughter_tau_neutrino_momentum);
+          // keep only taus in certain eta region and above 15 GeV of visible tau pT
+          if ( tau_vis.pT() <= 15.0*GeV || tau_vis.abseta() > 2.5) continue;
+
+          // Get prong number (number of tracks) in tau decay and check if tau decays leptonically
+          unsigned int nprong = 0;
+          bool lep_decaying_tau = false;
+          get_prong_number(tau.genParticle(), nprong, lep_decaying_tau);
+
+          // Apply reconstruction efficiency
+          int tau_id = 15;
+          if (nprong == 1) tau_id = 15;
+          else if (nprong == 3) tau_id = 16;
+
+          // Get fiducial lepton efficiency simulate reco efficiency
+          const double eff = (_use_fiducial_lepton_efficiency) ? apply_reco_eff(tau_id, tau_vis) : 1.0;
+          const bool keep_tau = rand()/static_cast<double>(RAND_MAX) <= eff;
+
+          // Keep tau if nprong = 1, it decays hadronically, and it's reconstructed by the detector
+          if ( !lep_decaying_tau && nprong == 1 && keep_tau) tau_candidates.push_back(tau_vis);
+        }
+
+
+        // Jets (all anti-kt R=0.4 jets with pT > 25 GeV and eta < 4.9)
+        Jets jet_candidates;
+        for (const Jet& jet : apply<FastJets>(event, "AntiKtJets04").jetsByPt(25*GeV)) {
+          if (jet.abseta() < 4.9) jet_candidates.push_back(jet);
+        }
+
+
+        // ETmiss
+        Particles vfs_particles = apply<VisibleFinalState>(event, "VFS").particles();
+        FourMomentum pTmiss;
+        for (const Particle& p : vfs_particles) pTmiss -= p.momentum();
+        double eTmiss = pTmiss.pT()/GeV;
+
+
+        //------------------
+        // Overlap removal
+
+        // electron - electron
+        Particles electron_candidates_2;
+        for (size_t ie = 0; ie < electron_candidates.size(); ++ie) {
+          const Particle & e = electron_candidates[ie];
+          bool away = true;
+          // If electron pair within dR < 0.1: remove electron with lower pT
+          for (size_t ie2=0; ie2 < electron_candidates_2.size(); ++ie2) {
+            if ( deltaR( e.momentum(), electron_candidates_2[ie2].momentum()) < 0.1 ) {
+              away = false;
+              break;
             }
-          if ( away_from_jet ) { non_hadronic_leps.push_back(cand_leptons[i]); }
-        }    
-
-        if (non_hadronic_leps.size() < 2) { vetoEvent; }
-
-      //=================== Choosing reconstructed jets ===================//
-      
-      // use non-hadronic leptons to select jets that are far from prompt leptons 
-      for (unsigned int i{0}; i < cand_jets.size(); i++)
-      {
-        for (unsigned int j{0}; j < non_hadronic_leps.size(); j++){
-
-          auto p1     = non_hadronic_leps[j].momentum();
-          auto p2     = cand_jets[i].momentum();
-          double y1   = p1.rapidity();
-          double y2   = p2.rapidity();
-          double phi1 = p1.phi();
-          double phi2 = p2.phi();
-          double delR = calc_deltaR(y1, y2, phi1, phi2);
-
-          if (delR > 0.3) { recon_jets.push_back(cand_jets[i]); }
+          }
+          // If isolated keep it
+          if ( away )
+            electron_candidates_2.push_back( e );
         }
-      }
-
-      // need at least two jets
-      if (recon_jets.size() < 2){ vetoEvent;}
-
-
-      //=================== work out tau vis ===================//
-
-      Particles non_tau_leps;
-      ParticleContainer tau_vis;
-      std::vector<std::vector<ParticleContainer>> tau_vis_comp;
-      std::vector<ParticleContainer> tau_vis_tmp; // unsorted bag of particles from taus, will use to work out which particle goes with which tau if ditau
-      
-      // get all particles from tau decays, place rest into non-tau containers
-      for(const Jet &j : cand_jets){ 
-        if (j.tauTagged()){ tau_vis_tmp.push_back(ParticleContainer(j)); }
-        else{nontau_jets.push_back(j);}
-      }
-
-      for(const Particle &p : non_hadronic_leps){ 
-        if (p.fromTau()){ tau_vis_tmp.push_back(ParticleContainer(p)); }
-        else{non_tau_leps.push_back(p);}
-      }
-
-      // get set of mother ids
-      std::set<Particle> parents;
-      for(const ParticleContainer &pc : tau_vis_tmp){ mother_ids.insert(pc.parents[0]); }
-
-      // get all particles orginating from each mother tau
-      for(unsigned int i{0}; i<parents.size(); i++){
-        std::vector<ParticleContainer> tmp_tau_comp;
-        for(const ParticleContainer &pc : tau_vis_tmp){
-          if(tau_vis_tmp.parents[0] == parents[i]){tmp_tau_comp.push_back(pc); }
+        // jet - electron
+        Jets recon_jets;
+        for (const Jet& jet : jet_candidates) {
+          bool away = true;
+          // if jet within dR < 0.2 of electron: remove jet
+          for (const Particle& e : electron_candidates_2) {
+            if (deltaR(e.momentum(), jet.momentum()) < 0.2) {
+              away = false;
+              break;
+            }
+          }
+          // jet - tau
+          if (away)  {
+            // If jet within dR < 0.2 of tau: remove jet
+            for (const Particle& tau : tau_candidates) {
+              if (deltaR(tau.momentum(), jet.momentum()) < 0.2) {
+                away = false;
+                break;
+              }
+            }
+          }
+          // If isolated keep it
+          if ( away )
+            recon_jets.push_back( jet );
         }
-        tau_vis_comp.push_back(ParticleContainer(tmp_tau_comp));
-      }
 
-      // sum 4-vecs of tau componants to get combined tau
-      for(const ParticleContainer &tau_particles : tau_vis_tmp){
-        ParticleContainer comb_tau = tau_particles[0];
-        for(int i{1}; i<tau_particles.size(); i++){
-          comb_tau += tau_particles[i]
-        }
-        tau_vis.push_back(tau_comb);
-      }
 
-      //=================== Choosing and sorting reconstructed Leptons ===================//
-      
-      // use non hadronic leptons to select leptons that are far enough from all other leptons
-      for (unsigned int i{0}; i < non_tau_leps.size(); i++)
-      {
-          for (unsigned int j{0}; j < non_tau_leps.size(); j++)
-          {
-
-            double y1   = non_tau_leps[j].momentum.rapidity;
-            double y2   = non_tau_leps[i].momentum.rapidity;
-            double phi1 = non_tau_leps[j].momentum.phi;
-            double phi2 = non_tau_leps[i].momentum.phi;
-            double delR = calc_deltaR(y1, y2, phi1, phi2);
-
-            if(i != j && delR < 0.2) { recon_leptons.push_back(non_tau_leps[i]); }
+        // electron - jet
+        Particles recon_leptons, recon_e;
+        for (size_t ie = 0; ie < electron_candidates_2.size(); ++ie) {
+          const Particle& e = electron_candidates_2[ie];
+          // If electron within 0.2 < dR < 0.4 from any jets: remove electron
+          bool away = true;
+          for (const Jet& jet : recon_jets) {
+            if (deltaR(e.momentum(), jet.momentum()) < 0.4) {
+              away = false;
+              break;
+            }
+          }
+          // electron - muon
+          // if electron within dR < 0.1 of a muon: remove electron
+          if (away) {
+            for (const Particle& mu : muon_candidates) {
+              if (deltaR(mu.momentum(), e.momentum()) < 0.1) {
+                away = false;
+                break;
+              }
+            }
+          }
+          // If isolated keep it
+          if (away)  {
+            recon_e += e;
+            recon_leptons += e;
           }
         }
 
-      // // Combine reco leps with taus (if any)
-      // for(const Particle &p : tau_vis){
-      //   recon_leps.push_back(p)
+
+        // tau - electron
+        Particles recon_tau;
+        for ( const Particle& tau : tau_candidates ) {
+          bool away = true;
+          // If tau within dR < 0.2 of an electron: remove tau
+          for ( const Particle& e : recon_e ) {
+            if (deltaR( tau.momentum(), e.momentum()) < 0.2) {
+              away = false;
+              break;
+            }
+          }
+          // tau - muon
+          // If tau within dR < 0.2 of a muon: remove tau
+          if (away)  {
+            for (const Particle& mu : muon_candidates) {
+              if (deltaR(tau.momentum(), mu.momentum()) < 0.2) {
+                away = false;
+                break;
+              }
+            }
+          }
+          // If isolated keep it
+          if (away) recon_tau.push_back( tau );
+        }
+
+        // Muon - jet isolation
+        Particles recon_mu, trigger_mu;
+        // If muon within dR < 0.4 of a jet, remove muon
+        for (const Particle& mu : muon_candidates) {
+          bool away = true;
+          for (const Jet& jet : recon_jets) {
+            if ( deltaR( mu.momentum(), jet.momentum()) < 0.4 ) {
+              away = false;
+              break;
+            }
+          }
+          if (away) {
+            recon_mu.push_back( mu );
+            recon_leptons.push_back( mu );
+            if (mu.abseta() < 2.4) trigger_mu.push_back( mu );
+          }
+        }
+
+        // End overlap removal
+        //------------------
+
+
+        // Jet cleaning
+        if (rand()/static_cast<double>(RAND_MAX) <= 0.42) {
+          for (const Jet& jet : recon_jets) {
+            const double eta = jet.rapidity();
+            const double phi = jet.azimuthalAngle(MINUSPI_PLUSPI);
+            if (jet.pT() > 25*GeV && inRange(eta, -0.1, 1.5) && inRange(phi, -0.9, -0.5)) vetoEvent;
+          }
+        }
+
+
+        // Post-isolation event cuts
+        // Require at least 1 charged tracks in event
+        if (charged_tracks.size() < 1) vetoEvent;
+
+        // And at least one e/mu passing trigger
+        if (!( !recon_e   .empty() && recon_e[0]   .pT() > 25*GeV)  &&
+            !( !trigger_mu.empty() && trigger_mu[0].pT() > 25*GeV) ) {
+          MSG_DEBUG("Hardest lepton fails trigger");
+          vetoEvent;
+        }
+
+        // And only accept events with at least 2 lepton
+        if (recon_leptons.size() < 2) vetoEvent;
+
+        // Sort leptons by decreasing pT
+        sortByPt(recon_leptons);
+        sortByPt(recon_tau);
+
+        // Calculate HTlep, fill lepton pT histograms & store chosen combination of 3 leptons
+        double HTlep = 0.;
+        Particles chosen_leptons;
+        
+        for(const Particle &p : recon_leptons){
+            
+          b_lep_pt.push_back(p.pT());
+          b_lep_rap.push_back(p.rapidity());
+          b_lep_phi.push_back(p.phi());
+          b_lep_mass.push_back(p.mass());
+          b_lep_energy.push_back(p.energy());
+          b_lep_px.push_back(p.px() );
+          b_lep_py.push_back(p.py());
+          b_lep_pz.push_back(p.pz());
+          b_lep_pid.push_back(p.pid());
+        }
+
+        for(const Particle &p : recon_tau){
+          b_tau_pt.push_back(p.pT());
+          b_tau_rap.push_back(p.rapidity());
+          b_tau_phi.push_back(p.phi());
+          b_tau_mass.push_back(p.mass());
+          b_tau_energy.push_back(p.energy());
+          b_tau_px.push_back(p.px() );
+          b_tau_py.push_back(p.py());
+          b_tau_pz.push_back(p.pz());
+          b_tau_pid.push_back(p.pid());
+      }
+
+      for(const Jet &p : recon_jets){
+        // std::cout << "Jet pT  = " << p.pT() << std::endl;
+        
+        // float* p_pT = new float(*p.pT());
+
+        // b_jet_pt.push_back(*p_pT);
+        b_jet_pt.push_back(p.pT());
+        b_jet_rap.push_back(p.rapidity());
+        b_jet_phi.push_back(p.phi());
+        b_jet_mass.push_back(p.mass());
+        b_jet_energy.push_back(p.energy());
+        b_jet_px.push_back(p.px() );
+        b_jet_py.push_back(p.py());
+        b_jet_pz.push_back(p.pz());
+
+        // delete p_pT;
+      }
+
+      for(unsigned int i{0}; i<b_jet_pt.size(); i++){
+        std::cout << "b_jet_pt[" << i << "] = " << b_jet_pt[i] << std::endl;
+      }
+
+      // for(const Particle &p : neutrinos){
+      //   b_nu_pt.push_back(p.pT());
+      //   b_nu_rap.push_back(p.rapidity());
+      //   b_nu_phi.push_back(p.phi());
+      //   b_nu_mass.push_back(p.mass());
+      //   b_nu_energy.push_back(p.energy());
+      //   b_nu_px.push_back(p.px() );
+      //   b_nu_py.push_back(p.py());
+      //   b_nu_pz.push_back(p.pz());
+      //   b_nu_pid.push_back(p.pid());
       // }
 
-      //Sort the leptons by pT
-      std::sort (recon_leptons.begin(), recon_leptons.end(), [](Particle const &a, Particle const &b) { return a.momentum().pT() > b.momentum().pT(); });
+      // Calculate HTjets
+      double HTjets = 0.;
+      for ( const Jet & jet : recon_jets )
+        HTjets += jet.perp()/GeV;
 
-      //=================== Leptons and Jets multiplicity vetoes ===================//
 
-      // need at exactly two leptons
-      if (recon_leptons.size() + tau_vis.size() != 2) { vetoEvent; }
-      
-      // ensure we have at least 2 jets for each event
-      if (recon_jets.size() < 2 ) { vetoEvent; }
+      // Calculate meff
+      double meff = eTmiss + HTjets;
+      for ( const Particle & e  : recon_e  )  {
+        meff += e.perp()/GeV;
+      }
+      for ( const Particle & mu : recon_mu )  {
+        meff += mu.perp()/GeV;
+      }
+      for ( const Particle & tau : recon_tau )  {
+        meff += tau.perp()/GeV;
+      }
+
+      b_HTlep = HTlep;
+      b_HTjets = HTjets;
+      b_eTmiss = eTmiss;
+      b_meff = meff;
 
       //=================== Summing up weight of surviving events ===================//
 
@@ -501,127 +635,50 @@ namespace Rivet {
       //Calculate the variance
       var_fid_sumW += std::pow(selected_weight, 2);
 
-      //=================== Calculating Missing Transverse Energy (MET) ===================//
-
-      Particle MET_proj = apply<MissingMomentum>(event, "missing_et"); //.vectorEt().mod();
-      Particle MET_smeared_atlas_proj = apply<SmearedMET>(event, "met_smeared_atlas"); //.vectorEt().mod();
-
-      const double eTmiss = pTmiss.pT();
-
-      //=================== Calculating the kinematic variables ===================//
-
-      // write 4-momentum to file
-      for(const Particle &p : recon_jets){
-        jet_pt.push_back(p.pT());
-        jet_rap.push_back(p.rapidity());
-        jet_phi.push_back(p.phi());
-        jet_mass.push_back(p.mass());
-        jet_energy.push_back(p.energy());
-        jet_px.push_back(p.px() );
-        jet_py.push_back(p.py());
-        jet_pz.push_back(p.pz());
-        jet_pid.push_back(p.pid());
-      }
-
-      for(const Particle &p : recon_leps){
-        lep_pt.push_back(p.pT());
-        lep_rap.push_back(p.rapidity());
-        lep_phi.push_back(p.phi());
-        lep_mass.push_back(p.mass());
-        lep_energy.push_back(p.energy());
-        lep_px.push_back(p.px() );
-        lep_py.push_back(p.py());
-        lep_pz.push_back(p.pz());
-        lep_pid.push_back(p.pid());
-      }
-
-      for(const Particle &p : tau_vis){
-        tau_pt.push_back(p.momentum.pT);
-        tau_rap.push_back(p.momentum.rapidity);
-        tau_phi.push_back(p.momentum.phi);
-        tau_phi.push_back(p.momentum.phi);
-        tau_mass.push_back(p.momentum.mass);
-        tau_energy.push_back(p.momentum.energy);
-        tau_px.push_back(p.momentum.px);
-        tau_py.push_back(p.momentum.py);
-        tau_pz.push_back(p.momentum.pz);
-        tau_pid.push_back(p.pid());
-      }
-
-      for(const Particle &t : tau_vis_comp){
-        std::vector<float> tmp_tau_comp_pt;
-        std::vector<float> tmp_tau_comp_rap;
-        std::vector<float> tmp_tau_comp_phi;
-        std::vector<float> tmp_tau_comp_mass;
-        std::vector<float> tmp_tau_comp_energy;
-        std::vector<float> tmp_tau_comp_px;
-        std::vector<float> tmp_tau_comp_py;
-        std::vector<float> tmp_tau_comp_pz;
-        std::vector<long>  tmp_tau_comp_pid;
-
-        for(const Particle &p : t){
-          tmp_tau_comp_pt.push_back(p.momentum);
-          tmp_tau_comp_rap.push_back(p.momentum.rapidity);
-          tmp_tau_comp_phi.push_back(p.momentum.phi);
-          tmp_tau_comp_mass.push_back(p.momentum.mass);
-          tmp_tau_comp_energy.push_back(p.momentum.energy);
-          tmp_tau_comp_px.push_back(p.momentum.px);
-          tmp_tau_comp_py.push_back(p.momentum.py);
-          tmp_tau_comp_pz.push_back(p.momentum.pz);
-          tmp_tau_comp_pid.push_back(p.pid);
-        }
-        tau_comp_pt.push_back(tmp_tau_comp_pt);
-        tau_comp_rap.push_back(tmp_tau_comp_rap);
-        tau_comp_phi.push_back(tmp_tau_comp_phi);
-        tau_comp_mass.push_back(tmp_tau_comp_mass);
-        tau_comp_energy.push_back(tmp_tau_comp_energy);
-        tau_comp_px.push_back(tmp_tau_comp_px);
-        tau_comp_py.push_back(tmp_tau_comp_py);
-        tau_comp_pz.push_back(tmp_tau_comp_pz);
-        tau_comp_pid.push_back(tmp_tau_comp_pid);
-      }
-
-      for(const Particle &p : neutrinos){
-        nu_pt.push_back(p.pT());
-        nu_rap.push_back(p.rapidity());
-        nu_phi.push_back(p.phi());
-        nu_mass.push_back(p.mass());
-        nu_energy.push_back(p.energy());
-        nu_px.push_back(p.px() );
-        nu_py.push_back(p.py());
-        nu_pz.push_back(p.pz());
-        nu_pid.push_back(p.pid());
-      }
-
-      // for(const Particle &p : tau_vis){
-      //   tau_pt.push_back(p.pT());
-      //   tau_rap.push_back(p.rapidity());
-      //   tau_phi.push_back(p.phi());
-      //   tau_mass.push_back(p.mass());
-      //   tau_energy.push_back(p.energy());
-      //   tau_px.push_back(p.px() );
-      //   tau_py.push_back(p.py());
-      //   tau_pz.push_back(p.pz());
-      // }
-
-      MET_pt =  MET_proj.pT();
-      MET_rap = MET_proj.rapidity();
-      MET_phi = MET_proj.phi();
-      MET =     MET_proj.vectorEt().mod();
-      MET_px =  MET_proj.px();
-      MET_py =  MET_proj.py();
-      MET_pz =  MET_proj.pz();
-
-      ATLAS_smeared_MET_pt  = MET_smeared_atlas_proj.pT();
-      ATLAS_smeared_MET_rap = MET_smeared_atlas_proj.rapidity();
-      ATLAS_smeared_MET_phi = MET_smeared_atlas_proj.phi();
-      ATLAS_smeared_MET     = MET_smeared_atlas_proj.vectorEt().mod();
-      ATLAS_smeared_MET_px =  MET_smeared_atlas_proj.px();
-      ATLAS_smeared_MET_py =  MET_smeared_atlas_proj.py();
-      ATLAS_smeared_MET_pz =  MET_smeared_atlas_proj.pz();
-
       survive_event_number++;
-      OutputTree->Fill();
+      m_OutputTree->Fill();
+
+      b_jet_pt.clear();
+      b_jet_rap.clear();
+      b_jet_phi.clear();
+      b_jet_mass.clear();
+      b_jet_energy.clear();
+      b_jet_px.clear();
+      b_jet_py.clear();
+      b_jet_pz.clear();
+      
+      b_lep_pt.clear();
+      b_lep_rap.clear();
+      b_lep_phi.clear();
+      b_lep_mass.clear();
+      b_lep_energy.clear();
+      b_lep_px.clear();
+      b_lep_py.clear();
+      b_lep_pz.clear();
+      b_lep_pid.clear();
+      
+      b_tau_pt.clear();
+      b_tau_rap.clear();
+      b_tau_phi.clear();
+      b_tau_mass.clear();
+      b_tau_energy.clear();
+      b_tau_pid.clear();
+      b_tau_px.clear();
+      b_tau_py.clear();
+      b_tau_pz.clear();
+      
+      b_nu_pt.clear();
+      b_nu_rap.clear();
+      b_nu_phi.clear();
+      b_nu_mass.clear();
+      b_nu_energy.clear();
+      b_nu_px.clear();
+      b_nu_py.clear();
+      b_nu_pz.clear();
+      b_nu_pid.clear();
+
+      // m_OutputTree->Print();
+      std::cout << "Filled output tree" << std::endl;
     }
 
     //================================================================================//
@@ -631,162 +688,271 @@ namespace Rivet {
     /// Normalise histograms, scale/divide histograms etc., after the run
     void finalize() {
       
-      //uncertainty on sum of weights
-      const double err_sumW=std::pow(var_sumW,0.5);
+      if (!m_has_finalized){
 
-      //uncertainty on fiducial sum of weights
-      const double err_fid_sumW=std::pow(var_fid_sumW,0.5);
+        m_has_finalized = true;
+        //uncertainty on sum of weights
+        const double err_sumW=std::pow(var_sumW,0.5);
 
-      //total cross-section in femtobarns
-      const double total_xs = crossSection();
+        //uncertainty on fiducial sum of weights
+        const double err_fid_sumW=std::pow(var_fid_sumW,0.5);
 
-      //fiducial cross-section in femtobarns
-      const double fid_xs = fid_sumW*total_xs/sumW;
+        //total cross-section in femtobarns
+        const double total_xs = crossSection();
 
-      //error on cross-section generated from MadGraph (hard-coded in femtobarns)
-      const double err_xs_mg = 0;
+        //fiducial cross-section in femtobarns
+        const double fid_xs = fid_sumW*total_xs/sumW;
 
-      //error on fiducial cross-section
-      const double err_fid_xs = pow(pow(err_fid_sumW,2)*pow(total_xs/sumW,2)+pow(err_xs_mg,2)*pow(fid_sumW/sumW,2)+pow(err_sumW,2)*pow(fid_sumW*total_xs/pow(sumW,2),2),0.5);
-      std::cout << "SMEAR OPTION: " << SMEAR << ", JET_SMEAR: " << JET_SMEAR << ", MUON_SMEAR: " << MUON_SMEAR << std::endl;
-      std::cout << total_xs << std::endl;
-      std::cout << "******* IMPORTANT INFORMATION *********" << std::endl;
-      std::cout << " Number of Events surviving: " << survive_event_number << std::endl;
-      std::cout << " Total XS MadGraph:  " << total_xs << std::endl;
-      std::cout << " Total XS error: " << err_xs_mg << std::endl;
-      std::cout << " Total Sum of Weights: " << sumW << std::endl;
-      std::cout << " Error on Total Sum of Weights: " <<  err_sumW << std::endl;
-      std::cout << " Selected Events Sum of Weights: " << fid_sumW << std::endl;
-      std::cout << " Error on Selected Events Sum of Weights: " << err_fid_sumW << std::endl;
-      std::cout << " Fiducial crossection: " << fid_xs << std::endl;
-      std::cout << " Error of fiducial crossection: " << err_fid_xs << std::endl;
-      std::cout << "************************" << std::endl;
-      
-      xs_total                =  total_xs;
-      xs_total_err            =  err_xs_mg;          
-      sum_of_weights          =  sumW;       
-      sum_of_weights_err      =  err_sumW;           
-      fid_sum_of_weights      =  fid_sumW;
-      fid_sum_of_weights_err  =  err_fid_sumW;
-      xs_fid                  =  fid_xs;
-      fid_xs_err              =  err_fid_xs;   
-      nsurvive_events         =  survive_event_number;        
-      ninit_events            =  event_number;
-      presel_eff              =  survive_event_number / event_number * 100;   
+        //error on cross-section generated from MadGraph (hard-coded in femtobarns)
+        const double err_xs_mg = 0;
 
-      MetaDataTree->Fill();
-      OutputFile->Close();
-      delete OutputFile;
-      delete MetaDataTree;
-      delete OutputTree;
-
+        //error on fiducial cross-section
+        const double err_fid_xs = pow(pow(err_fid_sumW,2)*pow(total_xs/sumW,2)+pow(err_xs_mg,2)*pow(fid_sumW/sumW,2)+pow(err_sumW,2)*pow(fid_sumW*total_xs/pow(sumW,2),2),0.5);
+        std::cout << "SMEAR OPTION: " << SMEAR << ", JET_SMEAR: " << JET_SMEAR << ", MUON_SMEAR: " << MUON_SMEAR << std::endl;
+        std::cout << total_xs << std::endl;
+        std::cout << "******* IMPORTANT INFORMATION *********" << std::endl;
+        std::cout << " Number of Events surviving: " << survive_event_number << std::endl;
+        std::cout << " Total XS MadGraph:  " << total_xs << std::endl;
+        std::cout << " Total XS error: " << err_xs_mg << std::endl;
+        std::cout << " Total Sum of Weights: " << sumW << std::endl;
+        std::cout << " Error on Total Sum of Weights: " <<  err_sumW << std::endl;
+        std::cout << " Selected Events Sum of Weights: " << fid_sumW << std::endl;
+        std::cout << " Error on Selected Events Sum of Weights: " << err_fid_sumW << std::endl;
+        std::cout << " Fiducial crossection: " << fid_xs << std::endl;
+        std::cout << " Error of fiducial crossection: " << err_fid_xs << std::endl;
+        std::cout << "************************" << std::endl;
+        
+        b_total_xs                =  total_xs;
+        b_err_xs_mg               =  err_xs_mg;
+        b_sumW                    =  sumW;
+        b_err_sumW                =  err_sumW;
+        b_fid_sumW                =  fid_sumW;
+        b_err_fid_sumW            =  err_fid_sumW;
+        b_fid_xs                  =  fid_xs;
+        b_err_fid_xs              =  err_fid_xs;
+        b_survive_event_number    =  survive_event_number;
+        b_event_number            =  event_number;
+        b_presel_eff              =  survive_event_number / event_number * 100;   
 
       
+        std::cout << "Filling metadata tree" << std::endl;
+        m_MetaDataTree->Fill();
+        std::cout << "Filled metadata tree" << std::endl;
+        
+        std::cout << "Writing MetaDataTree" << std::endl;
+        m_MetaDataTree->Write();
+        std::cout << "Written MetaDataTree" << std::endl;
+        
+        std::cout << "Writing OutputTree" << std::endl;
+        m_OutputTree->Write();
+        std::cout << "Written OutputTree" << std::endl;
 
+        delete m_OutputFile;
+      }
     }
 
-  private:
+  FourMomentum get_tau_neutrino_mom(const Particle& p)  {
+      assert(p.abspid() == PID::TAU);
+      ConstGenVertexPtr dv = p.genParticle()->end_vertex();
+      assert(dv != nullptr);
+      for(ConstGenParticlePtr pp: HepMCUtils::particles(dv, Relatives::CHILDREN)){
+        if (abs(pp->pdg_id()) == PID::NU_TAU) return FourMomentum(pp->momentum());
+      }
+      return FourMomentum();
+    }
 
-    // Output file
-    // TFile OutputFile(TFile.Open("output.root"));
-    // std::unique_ptr<TFile> OutputFile(TFile::Open("output.root", "RECREATE"));
-    TFile *OutputFile; // = TFile::Open("output.root", "RECREATE");
-    TTree *OutputTree; //("tree", "tree");
-    TTree *MetaDataTree; //("metadata", "metadata");
+  void get_prong_number(ConstGenParticlePtr p, unsigned int& nprong, bool& lep_decaying_tau) {
+      assert(p != nullptr);
+      //const int tau_barcode = p->barcode();
+      ConstGenVertexPtr dv = p->end_vertex();
+      assert(dv != nullptr);
+      for(ConstGenParticlePtr pp: HepMCUtils::particles(dv, Relatives::CHILDREN)){
+        // If they have status 1 and are charged they will produce a track and the prong number is +1
+        if (pp->status() == 1 )  {
+          const int id = pp->pdg_id();
+          if (Rivet::PID::charge(id) != 0 ) ++nprong;
+          // Check if tau decays leptonically
+          // @todo Can a tau decay include a tau in its decay daughters?!
+          if ((abs(id) == PID::ELECTRON || abs(id) == PID::MUON || abs(id) == PID::TAU) && abs(p->pdg_id()) == PID::TAU) lep_decaying_tau = true;
+        }
+        // If the status of the daughter particle is 2 it is unstable and the further decays are checked
+        else if (pp->status() == 2 )  {
+          get_prong_number(pp, nprong, lep_decaying_tau);
+        }
+      }
+    }
 
-  private:
-    std::vector<double> jet_pt;
-    std::vector<double> jet_rap;
-    std::vector<double> jet_phi;
-    std::vector<double> jet_mass;
-    std::vector<double> jet_energy;
-    std::vector<double> jet_px;
-    std::vector<double> jet_py;
-    std::vector<double> jet_pz;
-    std::vector<long>  jet_pid;
 
-    std::vector<double> lep_pt;
-    std::vector<double> lep_rap;
-    std::vector<double> lep_phi;
-    std::vector<double> lep_mass;
-    std::vector<double> lep_energy;
-    std::vector<double> lep_px;
-    std::vector<double> lep_py;
-    std::vector<double> lep_pz;
-    std::vector<long>  lep_pid;
+    /// Function giving fiducial lepton efficiency
+    double apply_reco_eff(int flavor, const Particle& p) {
+      float pt = p.pT()/GeV;
+      float eta = p.eta();
 
-    std::vector<std::vector<double>> tau_comp_pt;
-    std::vector<std::vector<double>> tau_comp_rap;
-    std::vector<std::vector<double>> tau_comp_phi;
-    std::vector<std::vector<double>> tau_comp_mass;
-    std::vector<std::vector<double>> tau_comp_energy;
-    std::vector<std::vector<double>> tau_comp_px;
-    std::vector<std::vector<double>> tau_comp_py;
-    std::vector<std::vector<double>> tau_comp_pz;
-    std::vector<std::vector<long>>  tau_comp_pid;
+      double eff = 0.;
+      //double err = 0.;
 
-    std::vector<double> tau_pt;
-    std::vector<double> tau_rap;
-    std::vector<double> tau_phi;
-    std::vector<double> tau_mass;
-    std::vector<double> tau_energy;
-    std::vector<double> tau_pid;
-    std::vector<double> tau_px;
-    std::vector<double> tau_py;
-    std::vector<double> tau_pz;
+      if (flavor == 11) { // weight prompt electron -- now including data/MC ID SF in eff.
+        //float rho = 0.820;
+        float p0 = 7.34;  float p1 = 0.8977;
+        //float ep0= 0.5 ;  float ep1= 0.0087;
+        eff = p1 - p0/pt;
 
-    std::vector<double> nu_pt;
-    std::vector<double> nu_rap;
-    std::vector<double> nu_phi;
-    std::vector<double> nu_mass;
-    std::vector<double> nu_energy;
-    std::vector<double> nu_px;
-    std::vector<double> nu_py;
-    std::vector<double> nu_pz;
-    std::vector<long>  nu_pid;
+        //double err0 = ep0/pt; // d(eff)/dp0
+        //double err1 = ep1;    // d(eff)/dp1
+        //err = sqrt(err0*err0 + err1*err1 - 2*rho*err0*err1);
 
-    double MET_pt;
-    double MET_rap;
-    double MET_phi;
-    double MET;
-    double MET_px;
-    double MET_py;
-    double MET_pz;
+        double avgrate = 0.6867;
+        float wz_ele_eta[] = {0.588717,0.603674,0.666135,0.747493,0.762202,0.675051,0.751606,0.745569,0.665333,0.610432,0.592693,};
+        //float ewz_ele_eta[] ={0.00292902,0.002476,0.00241209,0.00182319,0.00194339,0.00299785,0.00197339,0.00182004,0.00241793,0.00245997,0.00290394,};
+        int ibin = 3;
 
-    double ATLAS_smeared_MET_pt;
-    double ATLAS_smeared_MET_rap;
-    double ATLAS_smeared_MET_phi;
-    double ATLAS_smeared_MET;
-    double ATLAS_smeared_MET_px;
-    double ATLAS_smeared_MET_py;
-    double ATLAS_smeared_MET_pz;
+        if (eta >= -2.5 && eta < -2.0) ibin = 0;
+        if (eta >= -2.0 && eta < -1.5) ibin = 1;
+        if (eta >= -1.5 && eta < -1.0) ibin = 2;
+        if (eta >= -1.0 && eta < -0.5) ibin = 3;
+        if (eta >= -0.5 && eta < -0.1) ibin = 4;
+        if (eta >= -0.1 && eta <  0.1) ibin = 5;
+        if (eta >=  0.1 && eta <  0.5) ibin = 6;
+        if (eta >=  0.5 && eta <  1.0) ibin = 7;
+        if (eta >=  1.0 && eta <  1.5) ibin = 8;
+        if (eta >=  1.5 && eta <  2.0) ibin = 9;
+        if (eta >=  2.0 && eta <  2.5) ibin = 10;
 
-    std::vector<std::vector<double>> met_p4;
+        double eff_eta = wz_ele_eta[ibin];
+        //double err_eta = ewz_ele_eta[ibin];
 
-    double xs_total;
-    double xs_total_err;
-    double sum_of_weights;
-    double sum_of_weights_err;
-    double fid_sum_of_weights;
-    double fid_sum_of_weights_err;
-    double xs_fid;
-    double fid_xs_err;
-    double nsurvive_events;
-    double ninit_events;
-    double presel_eff;
+        eff = (eff*eff_eta)/avgrate;
+      }
 
-    int SMEAR;
-    bool MET_SMEAR;
-    bool JET_SMEAR;
-    bool MUON_SMEAR;
+      if (flavor == 12)  { // weight electron from tau
+        //float rho = 0.884;
+        float p0 = 6.799;  float p1 = 0.842;
+        //float ep0= 0.664;  float ep1= 0.016;
+        eff = p1 - p0/pt;
 
-    /// @name Histograms
-    //@{
-    std::map<string, Histo1DPtr> _h;
-    std::map<string, Histo2DPtr> _h2d;
-    std::map<string, Profile1DPtr> _p;
-    std::map<string, CounterPtr> _c;
-    //@}
+        //double err0 = ep0/pt; // d(eff)/dp0
+        //double err1 = ep1;    // d(eff)/dp1
+        //err = sqrt(err0*err0 + err1*err1 - 2*rho*err0*err1);
+
+        double avgrate = 0.5319;
+        float wz_elet_eta[] = {0.468945,0.465953,0.489545,0.58709,0.59669,0.515829,0.59284,0.575828,0.498181,0.463536,0.481738,};
+        //float ewz_elet_eta[] ={0.00933795,0.00780868,0.00792679,0.00642083,0.00692652,0.0101568,0.00698452,0.00643524,0.0080002,0.00776238,0.0094699,};
+        int ibin = 3;
+
+        if (eta >= -2.5 && eta < -2.0) ibin = 0;
+        if (eta >= -2.0 && eta < -1.5) ibin = 1;
+        if (eta >= -1.5 && eta < -1.0) ibin = 2;
+        if (eta >= -1.0 && eta < -0.5) ibin = 3;
+        if (eta >= -0.5 && eta < -0.1) ibin = 4;
+        if (eta >= -0.1 && eta <  0.1) ibin = 5;
+        if (eta >=  0.1 && eta <  0.5) ibin = 6;
+        if (eta >=  0.5 && eta <  1.0) ibin = 7;
+        if (eta >=  1.0 && eta <  1.5) ibin = 8;
+        if (eta >=  1.5 && eta <  2.0) ibin = 9;
+        if (eta >=  2.0 && eta <  2.5) ibin = 10;
+
+        double eff_eta = wz_elet_eta[ibin];
+        //double err_eta = ewz_elet_eta[ibin];
+
+        eff = (eff*eff_eta)/avgrate;
+
+      }
+
+      if (flavor == 13)  {// weight prompt muon
+
+        //if eta>0.1
+        float p0 = -18.21;  float p1 = 14.83;  float p2 = 0.9312;
+        //float ep0= 5.06;    float ep1= 1.9;    float ep2=0.00069;
+
+        if ( fabs(eta) < 0.1)  {
+          p0  = 7.459; p1 = 2.615; p2  = 0.5138;
+          //ep0 = 10.4; ep1 = 4.934; ep2 = 0.0034;
+        }
+
+        double arg = ( pt-p0 )/( 2.*p1 ) ;
+        eff = 0.5 * p2 * (1.+erf(arg));
+        //err = 0.1*eff;
+      }
+
+      if (flavor == 14)  {// weight muon from tau
+
+        if (fabs(eta) < 0.1) {
+          float p0 = -1.756;  float p1 = 12.38;  float p2 = 0.4441;
+          //float ep0= 10.39;   float ep1= 7.9;  float ep2=0.022;
+          double arg = ( pt-p0 )/( 2.*p1 ) ;
+          eff = 0.5 * p2 * (1.+erf(arg));
+          //err = 0.1*eff;
+        }
+        else {
+          float p0 = 2.102;  float p1 = 0.8293;
+          //float ep0= 0.271;  float ep1= 0.0083;
+          eff = p1 - p0/pt;
+          //double err0 = ep0/pt; // d(eff)/dp0
+          //double err1 = ep1;    // d(eff)/dp1
+          //err = sqrt(err0*err0 + err1*err1 - 2*rho*err0*err1);
+        }
+      }
+
+      if (flavor == 15)  {// weight hadronic tau 1p
+
+        float wz_tau1p[] = {0.0249278,0.146978,0.225049,0.229212,0.21519,0.206152,0.201559,0.197917,0.209249,0.228336,0.193548,};
+        //float ewz_tau1p[] ={0.00178577,0.00425252,0.00535052,0.00592126,0.00484684,0.00612941,0.00792099,0.0083006,0.0138307,0.015568,0.0501751,};
+        int ibin = 0;
+        if (pt > 15)  ibin = 1;
+        if (pt > 20)  ibin = 2;
+        if (pt > 25)  ibin = 3;
+        if (pt > 30)  ibin = 4;
+        if (pt > 40)  ibin = 5;
+        if (pt > 50)  ibin = 6;
+        if (pt > 60)  ibin = 7;
+        if (pt > 80)  ibin = 8;
+        if (pt > 100) ibin = 9;
+        if (pt > 200) ibin = 10;
+
+        eff = wz_tau1p[ibin];
+        //err = ewz_tau1p[ibin];
+
+
+        double avgrate = 0.1718;
+        float wz_tau1p_eta[] = {0.162132,0.176393,0.139619,0.178813,0.185144,0.210027,0.203937,0.178688,0.137034,0.164216,0.163713,};
+        //float ewz_tau1p_eta[] ={0.00706705,0.00617989,0.00506798,0.00525172,0.00581865,0.00865675,0.00599245,0.00529877,0.00506368,0.00617025,0.00726219,};
+
+        ibin = 3;
+        if (eta >= -2.5 && eta < -2.0) ibin = 0;
+        if (eta >= -2.0 && eta < -1.5) ibin = 1;
+        if (eta >= -1.5 && eta < -1.0) ibin = 2;
+        if (eta >= -1.0 && eta < -0.5) ibin = 3;
+        if (eta >= -0.5 && eta < -0.1) ibin = 4;
+        if (eta >= -0.1 && eta <  0.1) ibin = 5;
+        if (eta >=  0.1 && eta <  0.5) ibin = 6;
+        if (eta >=  0.5 && eta <  1.0) ibin = 7;
+        if (eta >=  1.0 && eta <  1.5) ibin = 8;
+        if (eta >=  1.5 && eta <  2.0) ibin = 9;
+        if (eta >=  2.0 && eta <  2.5) ibin = 10;
+
+        double eff_eta = wz_tau1p_eta[ibin];
+        //double err_eta = ewz_tau1p_eta[ibin];
+
+        eff = (eff*eff_eta)/avgrate;
+      }
+
+      if (flavor == 16)  { //weight hadronic tau 3p
+
+        float wz_tau3p[] = {0.000587199,0.00247181,0.0013031,0.00280112,};
+        //float ewz_tau3p[] ={0.000415091,0.000617187,0.000582385,0.00197792,};
+
+        int ibin = 0;
+        if (pt > 15) ibin = 1;
+        if (pt > 20) ibin = 2;
+        if (pt > 40) ibin = 3;
+        if (pt > 80) ibin = 4;
+
+        eff = wz_tau3p[ibin];
+        //err = ewz_tau3p[ibin];
+      }
+
+      return eff;
+    }
 
   }; //closes the majorana class at the very top
 
