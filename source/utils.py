@@ -1,10 +1,12 @@
 import logging
 log = logging.getLogger(__name__)
 
+import os
 import subprocess
 from subprocess import Popen, PIPE, STDOUT
 from typing import List
 import re
+
 
 def escape_ansi(line):
     try:
@@ -28,20 +30,26 @@ def log_subprocess_output(pipe, proc_name: str='') -> None:
         cleaned_line = str(cleaned_line).replace(r"\n", "").strip().replace("b\"", "").rstrip("\'").lstrip("\'")
         log.info(f"{proc_name}: %s", cleaned_line)
 
-def launch_process(cmd_list: List[str], proc_name: str='', shell: bool=False) -> int:
+def launch_process(cmd_list: List[str], proc_name: str='', shell: bool=False, env_vars=None) -> int:
     """
     Launches a subprocess, just a little function to avoid some of the boilerplate
     args:
-        cmd_list: List[str] - a list of commands/options to execute. e.g "rm -r aDir" would be ['rm', '-r', 'aDir']
-        proc_name: str (default='')- a string to optionally label the process with when logging
+        cmd_list: List[str] - a list of commands/options to execute. e.g "rm -r dirname" would be ['rm', '-r', 'dirname']
+        proc_name: str (default='') - a string to optionally label the process with when logging
+        shell: bool (default=False) - If True then use Popen(..., shell=True)
     returns:
         int: exit code (0 means success)
     """
     
+    my_env = os.environ.copy()
+
+    if env_vars is not None:
+        my_env = {**my_env, **env_vars}
+
     if len(cmd_list) == 0:
         return 0
     
-    process = Popen(cmd_list, stdout=PIPE, stderr=STDOUT, shell=shell)
+    process = Popen(cmd_list, stdout=PIPE, stderr=STDOUT, shell=shell, env=my_env)
     with process.stdout:
         log_subprocess_output(process.stdout, proc_name)
         

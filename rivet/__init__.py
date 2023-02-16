@@ -1,1 +1,1 @@
-from .run_rivet import run_rivet_routine
+from .rivet_tools import rivet_analyze_job

@@ -1,8 +1,7 @@
 //=================================  Introduction  =================================//<
 // -*- C++ -*-
-//Mohamed Aly and Ahmed Abdelmotteleb
-//Majorana Neutrino Sensitivity at ATLAS
-//Rivet analysis code that runs over our data [signal + background] and applies cuts
+// Implementation of ATLAS_2012_I1204447.cc 
+// Writes an NTuple of lepton, jet and tau kinematics
 
 //=================================  Libraries  =================================//
 #include "Rivet/Analysis.hh"
