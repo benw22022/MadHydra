@@ -20,15 +20,40 @@
 //=================================  MAIN  =================================//
 //==========================================================================//
 
+//divided into constructor + 3 loops: init, analyze and finalize
+  struct CutFlow{
+
+    std::map<std::string, int> m_cutflow;
+
+    void BookCut(const std::string& cut){
+      std::pair<std::string, int> entry{cut, 0};
+      m_cutflow.insert(entry);
+    }
+
+    void Count(const std::string& cut, const int& count=1){
+      if (m_cutflow.find(cut) == m_cutflow.end()){
+        BookCut(cut);
+      }
+      m_cutflow[cut] += count;
+    }
+
+    void Print() const {
+      std::cout << "*************************" << std::endl;
+      std::cout << "Cut : count" << std::endl;
+      for (auto const& [key, val] : m_cutflow){
+        std::cout << key << " : " << val << std::endl;
+      }
+    }
+
+  };
+
 namespace Rivet {
   
-
-  //divided into constructor + 3 loops: init, analyze and finalize
 
   //==================================================================================//
   //=================================  Constructer ==================================//
   //=================================================================================//
-  class pp_dpp_llvvjj : public Analysis {
+  class pp_dppjj_llvvjj : public Analysis {
 
     public:
 
@@ -39,7 +64,7 @@ namespace Rivet {
       };
 
       /// Constructor
-      pp_dpp_llvvjj() : Analysis("pp_dpp_llvvjj") {   }
+      pp_dppjj_llvvjj() : Analysis("pp_dppjj_llvvjj") {   }
 
       //=================================  Declaring global variables  =================================//
 
@@ -53,6 +78,9 @@ namespace Rivet {
       int survive_event_number = 0;
       int num_events_before_a_cut=0;
       int num_events_after_a_cut=0;
+
+      // Cutflow
+      CutFlow cutflow;
 
       // Output file
       TFile *m_OutputFile;
@@ -250,6 +278,7 @@ namespace Rivet {
       void analyze(const Event& event) {
         
         event_number++;
+        cutflow.Count("Initial");
 
         if(event_number % 1000 == 0){std::cout << "Proccessing event: " << event_number << std::endl;}
 
@@ -257,15 +286,15 @@ namespace Rivet {
         
         //=================== weight and variance ===================//
 
-        //This will calculate the weight for each of the N events that rivet processes
+        // This will calculate the weight for each of the N events that rivet processes
 
-        //weight of each event (Rivet has for some reason removed the weight() method, the 0th element should be the default weight from looking at the output of checkMetaSG.py)
+        // weight of each event (Rivet has for some reason removed the weight() method, the 0th element should be the default weight from looking at the output of checkMetaSG.py)
         const double weight = event.weights()[0];
 
-        //summing over all the weights (sum of weights)
+        // summing over all the weights (sum of weights)
         sumW += weight;
 
-        //Sum up the weights^2 --> This happens to be equal to the variance
+        // Sum up the weights^2 --> This happens to be equal to the variance
         var_sumW += std::pow(weight, 2);
 
         //================================= Building Candidate Leptons  -- Dressed =================================//
@@ -486,18 +515,32 @@ namespace Rivet {
         // Muon - jet isolation
         Particles recon_mu, trigger_mu;
         // If muon within dR < 0.4 of a jet, remove muon
+        std::vector<double> mdR;
         for (const Particle& mu : muon_candidates) {
           bool away = true;
           for (const Jet& jet : recon_jets) {
             if ( deltaR( mu.momentum(), jet.momentum()) < 0.4 ) {
               away = false;
+              mdR.push_back(deltaR( mu.momentum(), jet.momentum()));
               break;
             }
           }
           if (away) {
             recon_mu.push_back( mu );
             recon_leptons.push_back( mu );
-            if (mu.abseta() < 2.4) trigger_mu.push_back( mu );
+            if (mu.abseta() < 2.4) trigger_mu.push_back( mu ); // 2.4
+          }
+        }
+
+        if (trigger_mu.size() < 1){
+          cutflow.Count("Trigger muons outside of rapidity acceptance (>5)");
+          std::cout << muon_candidates[0].abseta();
+        }
+
+        if (recon_mu.size() < 1){
+          cutflow.Count("Muons not isolated from jets");
+          for (const double& dr: mdR){
+            std::cout << "DeltaR muon = " << dr << std::endl;
           }
         }
 
@@ -510,24 +553,42 @@ namespace Rivet {
           for (const Jet& jet : recon_jets) {
             const double eta = jet.rapidity();
             const double phi = jet.azimuthalAngle(MINUSPI_PLUSPI);
-            if (jet.pT() > 25*GeV && inRange(eta, -0.1, 1.5) && inRange(phi, -0.9, -0.5)) vetoEvent;
+            if (jet.pT() > 25*GeV && inRange(eta, -0.1, 1.5) && inRange(phi, -0.9, -0.5)){
+              cutflow.Count("Failed jet cleaning");
+              vetoEvent;
+            }
           }
         }
 
 
         // Post-isolation event cuts
         // Require at least 1 charged tracks in event
-        if (charged_tracks.size() < 1) vetoEvent;
+        if (charged_tracks.size() < 1){ 
+          cutflow.Count("< 1 charged tracks");
+          vetoEvent;
+        }
 
         // And at least one e/mu passing trigger
-        if (!( !recon_e   .empty() && recon_e[0]   .pT() > 25*GeV)  &&
-            !( !trigger_mu.empty() && trigger_mu[0].pT() > 25*GeV) ) {
-          MSG_DEBUG("Hardest lepton fails trigger");
+        if (!( !recon_e.empty() && recon_e[0].pT() > 25*GeV)  && !( !trigger_mu.empty() && trigger_mu[0].pT() > 25*GeV) ) {
+          
+          std::cout << "\nrecon_e.size() = " << recon_e.size() << std::endl;
+          if (!recon_e.empty()){
+            std::cout << " recon_e[0].pT() = " << recon_e.at(0).pT() << std::endl;
+          }
+          std::cout << "trigger_mu() = " << trigger_mu.size() << std::endl;
+          if (!trigger_mu.empty()){
+             std::cout << " trigger_mu[0].pT() = " << trigger_mu.at(0).pT() << std::endl;
+          }
+
+          cutflow.Count("Failed trigger");
           vetoEvent;
         }
 
         // And only accept events with at least 2 lepton
-        if (recon_leptons.size() < 2) vetoEvent;
+        if (recon_leptons.size() < 2){
+          cutflow.Count("< 2 Recon leptons");
+          vetoEvent;
+        }
 
         // Sort leptons by decreasing pT
         sortByPt(recon_leptons);
@@ -578,10 +639,6 @@ namespace Rivet {
         b_jet_pz.push_back(p.pz());
 
         // delete p_pT;
-      }
-
-      for(unsigned int i{0}; i<b_jet_pt.size(); i++){
-        std::cout << "b_jet_pt[" << i << "] = " << b_jet_pt[i] << std::endl;
       }
 
       // for(const Particle &p : neutrinos){
@@ -675,9 +732,6 @@ namespace Rivet {
       b_nu_py.clear();
       b_nu_pz.clear();
       b_nu_pid.clear();
-
-      // m_OutputTree->Print();
-      std::cout << "Filled output tree" << std::endl;
     }
 
     //================================================================================//
@@ -686,7 +740,8 @@ namespace Rivet {
 
     /// Normalise histograms, scale/divide histograms etc., after the run
     void finalize() {
-      
+
+      // Finalize gets called twice for some reason - without this flag output file gets deleted twice -> seg fault      
       if (!m_has_finalized){
 
         m_has_finalized = true;
@@ -731,21 +786,14 @@ namespace Rivet {
         b_err_fid_xs              =  err_fid_xs;
         b_survive_event_number    =  survive_event_number;
         b_event_number            =  event_number;
-        b_presel_eff              =  survive_event_number / event_number * 100;   
+        b_presel_eff              =  survive_event_number / event_number * 100;
 
-      
-        std::cout << "Filling metadata tree" << std::endl;
+        cutflow.Print();
+        
         m_MetaDataTree->Fill();
-        std::cout << "Filled metadata tree" << std::endl;
-        
-        std::cout << "Writing MetaDataTree" << std::endl;
         m_MetaDataTree->Write();
-        std::cout << "Written MetaDataTree" << std::endl;
-        
-        std::cout << "Writing OutputTree" << std::endl;
         m_OutputTree->Write();
-        std::cout << "Written OutputTree" << std::endl;
-
+        
         delete m_OutputFile;
       }
     }
@@ -957,7 +1005,7 @@ namespace Rivet {
 
   //=================================  Plugin hook  =================================//
   // The hook for the plugin system
-  DECLARE_RIVET_PLUGIN(pp_dpp_llvvjj);
+  DECLARE_RIVET_PLUGIN(pp_dppjj_llvvjj);
 
 
 }  //closes the Rivet namespace
