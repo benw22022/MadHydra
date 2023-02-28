@@ -11,6 +11,7 @@ outputs/*
 *asetup*
 *.so
 *.tmp*
+tmp.*
 *.__afs*
 *.yoda
 *.log
