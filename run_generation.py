@@ -10,7 +10,7 @@ import hydra
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 import source
-import rivet
+from rivet import rivet_analyze_job
 
             
 @hydra.main(config_path="config", config_name="config", version_base='1.1')
@@ -48,9 +48,9 @@ def run_generation(config: DictConfig) -> None:
         
         source.launch_process([madgraph_exec, 'proc_card.dat'], 'MadGraph')
         
-        # if not OmegaConf.is_missing(config, config.process['rivet']):
-        #     log.info(f"Running rivet routine {config.process.rivet}")
-        #     rivet.run_rivet_routine(config)
+        if not OmegaConf.is_missing(config, config.process['rivet']):
+            log.info(f"Running rivet routine {config.process.rivet}")
+            rivet_analyze_job(config)
         
         if config.cleanup:
             log.info("Running cleanup")
