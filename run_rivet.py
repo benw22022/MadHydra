@@ -48,12 +48,11 @@ def main() -> None:
         pool = Pool()
         for cfg in configs:
             pool.apply_async(run_rivet_in_new_dir, args = (cfg, args.routine))
-            pool.close()
-            pool.join()
-    
+        pool.close()
+        pool.join()
+
     else:   
-        for cfg in configs:
-            run_rivet_in_new_dir(cfg, args.routine)
+        [run_rivet_in_new_dir(cfg, args.routine) for cfg in configs]
 
 
 if __name__ == "__main__":
