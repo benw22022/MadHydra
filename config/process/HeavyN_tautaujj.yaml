@@ -1,0 +1,23 @@
+---
+model: SM_HeavyN_Gen3Mass_NLO
+
+process_name: HeavyN_tautaujj
+
+output_dir: ${process.process_name}_${parameters.mN3}_${parameters.VtaN3}
+
+rivet: minimal_2l2j
+
+gen_cmd: ['import model ${process.model}',
+          'generate p p > ta+ ta+ j j,
+          'add process p p > ta- ta- j j ',
+          'output ${process.output_dir}',
+          'launch',
+          'shower=pythia8',
+          'set mN1: ${parameters.mN1}',
+          'set mN2: ${parameters.mN2}',
+          'set mN3: ${parameters.mN3}',
+          'set VtaN1: ${parameters.VtaN1}',
+          'set VtaN2: ${parameters.VtaN2}',
+          'set VtaN3: ${parameters.VtaN3}',
+          'set nevents ${parameters.nevents}'
+          ]

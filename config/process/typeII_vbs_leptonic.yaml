@@ -5,9 +5,11 @@ process_name: typeII_single_prod_mmjj
 
 output_dir: ${process.process_name}_${parameters.MDPP}_${parameters.vevD}
 
+rivet: minimal_2l2j
+
 gen_cmd: ['import model ${process.model}',
-          'generate p p > mu+ mu+ j j',
-          'add process p p > mu- mu- j j',
+          'generate p p > l+ l+ j j',
+          'add process p p > l- l- j j',
           'output ${process.output_dir}',
           'launch ',
           'shower=pythia8',
