@@ -16,11 +16,8 @@
 #include "TTree.h"
 #include <math.h>
 
-//==========================================================================//
-//=================================  MAIN  =================================//
-//==========================================================================//
 
-//divided into constructor + 3 loops: init, analyze and finalize
+  // Helpful CutFlow struct
   struct CutFlow{
 
     std::map<std::string, int> m_cutflow;
@@ -43,9 +40,16 @@
       for (auto const& [key, val] : m_cutflow){
         std::cout << key << " : " << val << std::endl;
       }
+      std::cout << "*************************" << std::endl;
     }
 
   };
+
+//==========================================================================//
+//=================================  MAIN  =================================//
+//==========================================================================//
+
+//divided into constructor + 3 loops: init, analyze and finalize
 
 namespace Rivet {
   
@@ -53,7 +57,7 @@ namespace Rivet {
   //==================================================================================//
   //=================================  Constructer ==================================//
   //=================================================================================//
-  class pp_dppjj_llvvjj : public Analysis {
+  class minimal_2l2j : public Analysis {
 
     public:
 
@@ -64,7 +68,7 @@ namespace Rivet {
       };
 
       /// Constructor
-      pp_dppjj_llvvjj() : Analysis("pp_dppjj_llvvjj") {   }
+      minimal_2l2j() : Analysis("minimal_2l2j") {   }
 
       //=================================  Declaring global variables  =================================//
 
@@ -143,12 +147,6 @@ namespace Rivet {
       double b_survive_event_number;
       double b_event_number;
       double b_presel_eff;
-
-      int SMEAR;
-      bool MET_SMEAR;
-      bool JET_SMEAR;
-      bool MUON_SMEAR;
-
       bool _use_fiducial_lepton_efficiency;
 
       //=================================  Declaring global functions  =================================//
@@ -159,13 +157,7 @@ namespace Rivet {
 
       void init() {
         
-        // 0 == no object smearing, 1 == ATLAS Run2 smearing, 2 == CMS Run2 smearing
-        SMEAR = 0;
         
-        // 0 == no smearing, 1 == smear
-        MET_SMEAR = 1;
-        JET_SMEAR = 1;
-        MUON_SMEAR = 1;
 
         // Output file
         m_OutputFile = new TFile("output.root", "RECREATE");
@@ -218,6 +210,7 @@ namespace Rivet {
         m_MetaDataTree->Branch("nsurvive_events",        &b_survive_event_number, "nsurvive_events/D");
         m_MetaDataTree->Branch("ninit_events",           &b_event_number,          "ninit_events/D");
         m_MetaDataTree->Branch("presel_eff",             &b_presel_eff,            "preself_eff/D");
+        m_MetaDataTree->Branch("cutflow",                &cutflow,                 "cutflow");
 
 
 
@@ -300,63 +293,21 @@ namespace Rivet {
         //================================= Building Candidate Leptons  -- Dressed =================================//
         // Muons
         Particles muon_candidates;
+        Particles recon_leptons;
         const Particles charged_tracks    = apply<ChargedFinalState>(event, "CFS").particles();
         const Particles visible_particles = apply<VisibleFinalState>(event, "VFS").particles();
+        
         for (const Particle& mu : apply<IdentifiedFinalState>(event, "muons").particlesByPt()) {
-          // Calculate pTCone30 variable (pT of all tracks within dR<0.3 - pT of muon itself)
-          double pTinCone = -mu.pT();
-          for (const Particle& track : charged_tracks) {
-            if (deltaR(mu.momentum(), track.momentum()) < 0.3)
-              pTinCone += track.pT();
-          }
-
-          // Calculate eTCone30 variable (pT of all visible particles within dR<0.3)
-          double eTinCone = 0.;
-          for (const Particle& visible_particle : visible_particles) {
-            if (visible_particle.abspid() != PID::MUON && inRange(deltaR(mu.momentum(), visible_particle.momentum()), 0.1, 0.3))
-              eTinCone += visible_particle.pT();
-          }
-
-          // Apply reconstruction efficiency and simulate reco
-          int muon_id = 13;
-          if ( mu.hasAncestor(15) || mu.hasAncestor(-15)) muon_id = 14;
-          const double eff = (_use_fiducial_lepton_efficiency) ? apply_reco_eff(muon_id, mu) : 1.0;
-          const bool keep_muon = rand()/static_cast<double>(RAND_MAX) <= eff;
-
-          // Keep muon if pTCone30/pT < 0.15 and eTCone30/pT < 0.2 and reconstructed
-          if (keep_muon && pTinCone/mu.pT() <= 0.15 && eTinCone/mu.pT() < 0.2)
-            muon_candidates.push_back(mu);
+          muon_candidates.push_back(mu);
+          recon_leptons.push_back(mu);
         }
 
 
         // Electrons
         Particles electron_candidates;
         for (const Particle& e : apply<IdentifiedFinalState>(event, "elecs").particlesByPt()) {
-          // Neglect electrons in crack regions
-          if (inRange(e.abseta(), 1.37, 1.52)) continue;
-
-          // Calculate pTCone30 variable (pT of all tracks within dR<0.3 - pT of electron itself)
-          double pTinCone = -e.pT();
-          for (const Particle& track : charged_tracks) {
-            if (deltaR(e.momentum(), track.momentum()) < 0.3) pTinCone += track.pT();
-          }
-
-          // Calculate eTCone30 variable (pT of all visible particles (except muons) within dR<0.3)
-          double eTinCone = 0.;
-          for (const Particle& visible_particle : visible_particles) {
-            if (visible_particle.abspid() != PID::MUON && inRange(deltaR(e.momentum(), visible_particle.momentum()), 0.1, 0.3))
-              eTinCone += visible_particle.pT();
-          }
-
-          // Apply reconstruction efficiency and simulate reco
-          int elec_id = 11;
-          if (e.hasAncestor(15) || e.hasAncestor(-15)) elec_id = 12;
-          const double eff = (_use_fiducial_lepton_efficiency) ? apply_reco_eff(elec_id, e) : 1.0;
-          const bool keep_elec = rand()/static_cast<double>(RAND_MAX) <= eff;
-
-          // Keep electron if pTCone30/pT < 0.13 and eTCone30/pT < 0.2 and reconstructed
-          if (keep_elec && pTinCone/e.pT() <= 0.13 && eTinCone/e.pT() < 0.2)
             electron_candidates.push_back(e);
+            recon_leptons.push_back(e);
         }
 
 
@@ -364,6 +315,7 @@ namespace Rivet {
         /// @todo This could benefit from a tau finder projection
         Particles tau_candidates;
         for (const Particle& tau : apply<UnstableParticles>(event, "UFS").particlesByPt()) {
+
           // Only pick taus out of all unstable particles
           if (tau.abspid() != PID::TAU) continue;
 
@@ -375,31 +327,13 @@ namespace Rivet {
           FourMomentum daughter_tau_neutrino_momentum = get_tau_neutrino_mom(tau);
           Particle tau_vis = tau;
           tau_vis.setMomentum(tau.momentum()-daughter_tau_neutrino_momentum);
-          // keep only taus in certain eta region and above 15 GeV of visible tau pT
-          if ( tau_vis.pT() <= 15.0*GeV || tau_vis.abseta() > 2.5) continue;
-
-          // Get prong number (number of tracks) in tau decay and check if tau decays leptonically
-          unsigned int nprong = 0;
-          bool lep_decaying_tau = false;
-          get_prong_number(tau.genParticle(), nprong, lep_decaying_tau);
-
-          // Apply reconstruction efficiency
-          int tau_id = 15;
-          if (nprong == 1) tau_id = 15;
-          else if (nprong == 3) tau_id = 16;
-
-          // Get fiducial lepton efficiency simulate reco efficiency
-          const double eff = (_use_fiducial_lepton_efficiency) ? apply_reco_eff(tau_id, tau_vis) : 1.0;
-          const bool keep_tau = rand()/static_cast<double>(RAND_MAX) <= eff;
-
-          // Keep tau if nprong = 1, it decays hadronically, and it's reconstructed by the detector
-          if ( !lep_decaying_tau && nprong == 1 && keep_tau) tau_candidates.push_back(tau_vis);
+          tau_candidates.push_back(tau_vis);
         }
 
 
-        // Jets (all anti-kt R=0.4 jets with pT > 25 GeV and eta < 4.9)
+        // Jets (all anti-kt R=0.4 jets with pT > 20 GeV and eta < 4.9)
         Jets jet_candidates;
-        for (const Jet& jet : apply<FastJets>(event, "AntiKtJets04").jetsByPt(25*GeV)) {
+        for (const Jet& jet : apply<FastJets>(event, "AntiKtJets04").jetsByPt(20*GeV)) {
           if (jet.abseta() < 4.9) jet_candidates.push_back(jet);
         }
 
@@ -410,189 +344,21 @@ namespace Rivet {
         for (const Particle& p : vfs_particles) pTmiss -= p.momentum();
         double eTmiss = pTmiss.pT()/GeV;
 
-
-        //------------------
-        // Overlap removal
-
-        // electron - electron
-        Particles electron_candidates_2;
-        for (size_t ie = 0; ie < electron_candidates.size(); ++ie) {
-          const Particle & e = electron_candidates[ie];
-          bool away = true;
-          // If electron pair within dR < 0.1: remove electron with lower pT
-          for (size_t ie2=0; ie2 < electron_candidates_2.size(); ++ie2) {
-            if ( deltaR( e.momentum(), electron_candidates_2[ie2].momentum()) < 0.1 ) {
-              away = false;
-              break;
-            }
-          }
-          // If isolated keep it
-          if ( away )
-            electron_candidates_2.push_back( e );
-        }
-        // jet - electron
-        Jets recon_jets;
-        for (const Jet& jet : jet_candidates) {
-          bool away = true;
-          // if jet within dR < 0.2 of electron: remove jet
-          for (const Particle& e : electron_candidates_2) {
-            if (deltaR(e.momentum(), jet.momentum()) < 0.2) {
-              away = false;
-              break;
-            }
-          }
-          // jet - tau
-          if (away)  {
-            // If jet within dR < 0.2 of tau: remove jet
-            for (const Particle& tau : tau_candidates) {
-              if (deltaR(tau.momentum(), jet.momentum()) < 0.2) {
-                away = false;
-                break;
-              }
-            }
-          }
-          // If isolated keep it
-          if ( away )
-            recon_jets.push_back( jet );
-        }
-
-
-        // electron - jet
-        Particles recon_leptons, recon_e;
-        for (size_t ie = 0; ie < electron_candidates_2.size(); ++ie) {
-          const Particle& e = electron_candidates_2[ie];
-          // If electron within 0.2 < dR < 0.4 from any jets: remove electron
-          bool away = true;
-          for (const Jet& jet : recon_jets) {
-            if (deltaR(e.momentum(), jet.momentum()) < 0.4) {
-              away = false;
-              break;
-            }
-          }
-          // electron - muon
-          // if electron within dR < 0.1 of a muon: remove electron
-          if (away) {
-            for (const Particle& mu : muon_candidates) {
-              if (deltaR(mu.momentum(), e.momentum()) < 0.1) {
-                away = false;
-                break;
-              }
-            }
-          }
-          // If isolated keep it
-          if (away)  {
-            recon_e += e;
-            recon_leptons += e;
-          }
-        }
-
-
-        // tau - electron
-        Particles recon_tau;
-        for ( const Particle& tau : tau_candidates ) {
-          bool away = true;
-          // If tau within dR < 0.2 of an electron: remove tau
-          for ( const Particle& e : recon_e ) {
-            if (deltaR( tau.momentum(), e.momentum()) < 0.2) {
-              away = false;
-              break;
-            }
-          }
-          // tau - muon
-          // If tau within dR < 0.2 of a muon: remove tau
-          if (away)  {
-            for (const Particle& mu : muon_candidates) {
-              if (deltaR(tau.momentum(), mu.momentum()) < 0.2) {
-                away = false;
-                break;
-              }
-            }
-          }
-          // If isolated keep it
-          if (away) recon_tau.push_back( tau );
-        }
-
-        // Muon - jet isolation
-        Particles recon_mu, trigger_mu;
-        // If muon within dR < 0.4 of a jet, remove muon
-        std::vector<double> mdR;
-        for (const Particle& mu : muon_candidates) {
-          bool away = true;
-          for (const Jet& jet : recon_jets) {
-            if ( deltaR( mu.momentum(), jet.momentum()) < 0.4 ) {
-              away = false;
-              mdR.push_back(deltaR( mu.momentum(), jet.momentum()));
-              break;
-            }
-          }
-          if (away) {
-            recon_mu.push_back( mu );
-            recon_leptons.push_back( mu );
-            if (mu.abseta() < 2.4) trigger_mu.push_back( mu ); // 2.4
-          }
-        }
-
-        if (trigger_mu.size() < 1){
-          cutflow.Count("Trigger muons outside of rapidity acceptance (>5)");
-          std::cout << muon_candidates[0].abseta();
-        }
-
-        if (recon_mu.size() < 1){
-          cutflow.Count("Muons not isolated from jets");
-          for (const double& dr: mdR){
-            std::cout << "DeltaR muon = " << dr << std::endl;
-          }
-        }
-
-        // End overlap removal
-        //------------------
-
-
-        // Jet cleaning
-        if (rand()/static_cast<double>(RAND_MAX) <= 0.42) {
-          for (const Jet& jet : recon_jets) {
-            const double eta = jet.rapidity();
-            const double phi = jet.azimuthalAngle(MINUSPI_PLUSPI);
-            if (jet.pT() > 25*GeV && inRange(eta, -0.1, 1.5) && inRange(phi, -0.9, -0.5)){
-              cutflow.Count("Failed jet cleaning");
-              vetoEvent;
-            }
-          }
-        }
-
-
-        // Post-isolation event cuts
-        // Require at least 1 charged tracks in event
-        if (charged_tracks.size() < 1){ 
-          cutflow.Count("< 1 charged tracks");
-          vetoEvent;
-        }
-
-        // And at least one e/mu passing trigger
-        if (!( !recon_e.empty() && recon_e[0].pT() > 25*GeV)  && !( !trigger_mu.empty() && trigger_mu[0].pT() > 25*GeV) ) {
+        // Veto event if we have < 2 leptons
+        cutflow.BookCut("< 2 leptons");
+        if (recon_leptons.size() + tau_candidates.size() < 2){
           
-          std::cout << "\nrecon_e.size() = " << recon_e.size() << std::endl;
-          if (!recon_e.empty()){
-            std::cout << " recon_e[0].pT() = " << recon_e.at(0).pT() << std::endl;
-          }
-          std::cout << "trigger_mu() = " << trigger_mu.size() << std::endl;
-          if (!trigger_mu.empty()){
-             std::cout << " trigger_mu[0].pT() = " << trigger_mu.at(0).pT() << std::endl;
-          }
-
-          cutflow.Count("Failed trigger");
           vetoEvent;
         }
 
-        // And only accept events with at least 2 lepton
-        if (recon_leptons.size() < 2){
-          cutflow.Count("< 2 Recon leptons");
+        // Veto event if we have < 2 jets
+        cutflow.BookCut("< 2 jets");
+        if (jet_candidates.size() < 2){
+          cutflow.Count("< 2 jets");
           vetoEvent;
         }
 
-        // Sort leptons by decreasing pT
-        sortByPt(recon_leptons);
-        sortByPt(recon_tau);
+
 
         // Calculate HTlep, fill lepton pT histograms & store chosen combination of 3 leptons
         double HTlep = 0.;
@@ -611,7 +377,7 @@ namespace Rivet {
           b_lep_pid.push_back(p.pid());
         }
 
-        for(const Particle &p : recon_tau){
+        for(const Particle &p : tau_candidates){
           b_tau_pt.push_back(p.pT());
           b_tau_rap.push_back(p.rapidity());
           b_tau_phi.push_back(p.phi());
@@ -623,12 +389,7 @@ namespace Rivet {
           b_tau_pid.push_back(p.pid());
       }
 
-      for(const Jet &p : recon_jets){
-        // std::cout << "Jet pT  = " << p.pT() << std::endl;
-        
-        // float* p_pT = new float(*p.pT());
-
-        // b_jet_pt.push_back(*p_pT);
+      for(const Jet &p : jet_candidates){
         b_jet_pt.push_back(p.pT());
         b_jet_rap.push_back(p.rapidity());
         b_jet_phi.push_back(p.phi());
@@ -637,8 +398,6 @@ namespace Rivet {
         b_jet_px.push_back(p.px() );
         b_jet_py.push_back(p.py());
         b_jet_pz.push_back(p.pz());
-
-        // delete p_pT;
       }
 
       // for(const Particle &p : neutrinos){
@@ -655,19 +414,19 @@ namespace Rivet {
 
       // Calculate HTjets
       double HTjets = 0.;
-      for ( const Jet & jet : recon_jets )
+      for ( const Jet & jet : jet_candidates)
         HTjets += jet.perp()/GeV;
 
 
       // Calculate meff
       double meff = eTmiss + HTjets;
-      for ( const Particle & e  : recon_e  )  {
+      for ( const Particle & e  : electron_candidates )  {
         meff += e.perp()/GeV;
       }
-      for ( const Particle & mu : recon_mu )  {
+      for ( const Particle & mu : muon_candidates)  {
         meff += mu.perp()/GeV;
       }
-      for ( const Particle & tau : recon_tau )  {
+      for ( const Particle & tau : tau_candidates)  {
         meff += tau.perp()/GeV;
       }
 
@@ -732,6 +491,9 @@ namespace Rivet {
       b_nu_py.clear();
       b_nu_pz.clear();
       b_nu_pid.clear();
+
+      cutflow.Count("final");
+
     }
 
     //================================================================================//
@@ -762,7 +524,6 @@ namespace Rivet {
 
         //error on fiducial cross-section
         const double err_fid_xs = pow(pow(err_fid_sumW,2)*pow(total_xs/sumW,2)+pow(err_xs_mg,2)*pow(fid_sumW/sumW,2)+pow(err_sumW,2)*pow(fid_sumW*total_xs/pow(sumW,2),2),0.5);
-        std::cout << "SMEAR OPTION: " << SMEAR << ", JET_SMEAR: " << JET_SMEAR << ", MUON_SMEAR: " << MUON_SMEAR << std::endl;
         std::cout << total_xs << std::endl;
         std::cout << "******* IMPORTANT INFORMATION *********" << std::endl;
         std::cout << " Number of Events surviving: " << survive_event_number << std::endl;
@@ -829,183 +590,11 @@ namespace Rivet {
       }
     }
 
-
-    /// Function giving fiducial lepton efficiency
-    double apply_reco_eff(int flavor, const Particle& p) {
-      float pt = p.pT()/GeV;
-      float eta = p.eta();
-
-      double eff = 0.;
-      //double err = 0.;
-
-      if (flavor == 11) { // weight prompt electron -- now including data/MC ID SF in eff.
-        //float rho = 0.820;
-        float p0 = 7.34;  float p1 = 0.8977;
-        //float ep0= 0.5 ;  float ep1= 0.0087;
-        eff = p1 - p0/pt;
-
-        //double err0 = ep0/pt; // d(eff)/dp0
-        //double err1 = ep1;    // d(eff)/dp1
-        //err = sqrt(err0*err0 + err1*err1 - 2*rho*err0*err1);
-
-        double avgrate = 0.6867;
-        float wz_ele_eta[] = {0.588717,0.603674,0.666135,0.747493,0.762202,0.675051,0.751606,0.745569,0.665333,0.610432,0.592693,};
-        //float ewz_ele_eta[] ={0.00292902,0.002476,0.00241209,0.00182319,0.00194339,0.00299785,0.00197339,0.00182004,0.00241793,0.00245997,0.00290394,};
-        int ibin = 3;
-
-        if (eta >= -2.5 && eta < -2.0) ibin = 0;
-        if (eta >= -2.0 && eta < -1.5) ibin = 1;
-        if (eta >= -1.5 && eta < -1.0) ibin = 2;
-        if (eta >= -1.0 && eta < -0.5) ibin = 3;
-        if (eta >= -0.5 && eta < -0.1) ibin = 4;
-        if (eta >= -0.1 && eta <  0.1) ibin = 5;
-        if (eta >=  0.1 && eta <  0.5) ibin = 6;
-        if (eta >=  0.5 && eta <  1.0) ibin = 7;
-        if (eta >=  1.0 && eta <  1.5) ibin = 8;
-        if (eta >=  1.5 && eta <  2.0) ibin = 9;
-        if (eta >=  2.0 && eta <  2.5) ibin = 10;
-
-        double eff_eta = wz_ele_eta[ibin];
-        //double err_eta = ewz_ele_eta[ibin];
-
-        eff = (eff*eff_eta)/avgrate;
-      }
-
-      if (flavor == 12)  { // weight electron from tau
-        //float rho = 0.884;
-        float p0 = 6.799;  float p1 = 0.842;
-        //float ep0= 0.664;  float ep1= 0.016;
-        eff = p1 - p0/pt;
-
-        //double err0 = ep0/pt; // d(eff)/dp0
-        //double err1 = ep1;    // d(eff)/dp1
-        //err = sqrt(err0*err0 + err1*err1 - 2*rho*err0*err1);
-
-        double avgrate = 0.5319;
-        float wz_elet_eta[] = {0.468945,0.465953,0.489545,0.58709,0.59669,0.515829,0.59284,0.575828,0.498181,0.463536,0.481738,};
-        //float ewz_elet_eta[] ={0.00933795,0.00780868,0.00792679,0.00642083,0.00692652,0.0101568,0.00698452,0.00643524,0.0080002,0.00776238,0.0094699,};
-        int ibin = 3;
-
-        if (eta >= -2.5 && eta < -2.0) ibin = 0;
-        if (eta >= -2.0 && eta < -1.5) ibin = 1;
-        if (eta >= -1.5 && eta < -1.0) ibin = 2;
-        if (eta >= -1.0 && eta < -0.5) ibin = 3;
-        if (eta >= -0.5 && eta < -0.1) ibin = 4;
-        if (eta >= -0.1 && eta <  0.1) ibin = 5;
-        if (eta >=  0.1 && eta <  0.5) ibin = 6;
-        if (eta >=  0.5 && eta <  1.0) ibin = 7;
-        if (eta >=  1.0 && eta <  1.5) ibin = 8;
-        if (eta >=  1.5 && eta <  2.0) ibin = 9;
-        if (eta >=  2.0 && eta <  2.5) ibin = 10;
-
-        double eff_eta = wz_elet_eta[ibin];
-        //double err_eta = ewz_elet_eta[ibin];
-
-        eff = (eff*eff_eta)/avgrate;
-
-      }
-
-      if (flavor == 13)  {// weight prompt muon
-
-        //if eta>0.1
-        float p0 = -18.21;  float p1 = 14.83;  float p2 = 0.9312;
-        //float ep0= 5.06;    float ep1= 1.9;    float ep2=0.00069;
-
-        if ( fabs(eta) < 0.1)  {
-          p0  = 7.459; p1 = 2.615; p2  = 0.5138;
-          //ep0 = 10.4; ep1 = 4.934; ep2 = 0.0034;
-        }
-
-        double arg = ( pt-p0 )/( 2.*p1 ) ;
-        eff = 0.5 * p2 * (1.+erf(arg));
-        //err = 0.1*eff;
-      }
-
-      if (flavor == 14)  {// weight muon from tau
-
-        if (fabs(eta) < 0.1) {
-          float p0 = -1.756;  float p1 = 12.38;  float p2 = 0.4441;
-          //float ep0= 10.39;   float ep1= 7.9;  float ep2=0.022;
-          double arg = ( pt-p0 )/( 2.*p1 ) ;
-          eff = 0.5 * p2 * (1.+erf(arg));
-          //err = 0.1*eff;
-        }
-        else {
-          float p0 = 2.102;  float p1 = 0.8293;
-          //float ep0= 0.271;  float ep1= 0.0083;
-          eff = p1 - p0/pt;
-          //double err0 = ep0/pt; // d(eff)/dp0
-          //double err1 = ep1;    // d(eff)/dp1
-          //err = sqrt(err0*err0 + err1*err1 - 2*rho*err0*err1);
-        }
-      }
-
-      if (flavor == 15)  {// weight hadronic tau 1p
-
-        float wz_tau1p[] = {0.0249278,0.146978,0.225049,0.229212,0.21519,0.206152,0.201559,0.197917,0.209249,0.228336,0.193548,};
-        //float ewz_tau1p[] ={0.00178577,0.00425252,0.00535052,0.00592126,0.00484684,0.00612941,0.00792099,0.0083006,0.0138307,0.015568,0.0501751,};
-        int ibin = 0;
-        if (pt > 15)  ibin = 1;
-        if (pt > 20)  ibin = 2;
-        if (pt > 25)  ibin = 3;
-        if (pt > 30)  ibin = 4;
-        if (pt > 40)  ibin = 5;
-        if (pt > 50)  ibin = 6;
-        if (pt > 60)  ibin = 7;
-        if (pt > 80)  ibin = 8;
-        if (pt > 100) ibin = 9;
-        if (pt > 200) ibin = 10;
-
-        eff = wz_tau1p[ibin];
-        //err = ewz_tau1p[ibin];
-
-
-        double avgrate = 0.1718;
-        float wz_tau1p_eta[] = {0.162132,0.176393,0.139619,0.178813,0.185144,0.210027,0.203937,0.178688,0.137034,0.164216,0.163713,};
-        //float ewz_tau1p_eta[] ={0.00706705,0.00617989,0.00506798,0.00525172,0.00581865,0.00865675,0.00599245,0.00529877,0.00506368,0.00617025,0.00726219,};
-
-        ibin = 3;
-        if (eta >= -2.5 && eta < -2.0) ibin = 0;
-        if (eta >= -2.0 && eta < -1.5) ibin = 1;
-        if (eta >= -1.5 && eta < -1.0) ibin = 2;
-        if (eta >= -1.0 && eta < -0.5) ibin = 3;
-        if (eta >= -0.5 && eta < -0.1) ibin = 4;
-        if (eta >= -0.1 && eta <  0.1) ibin = 5;
-        if (eta >=  0.1 && eta <  0.5) ibin = 6;
-        if (eta >=  0.5 && eta <  1.0) ibin = 7;
-        if (eta >=  1.0 && eta <  1.5) ibin = 8;
-        if (eta >=  1.5 && eta <  2.0) ibin = 9;
-        if (eta >=  2.0 && eta <  2.5) ibin = 10;
-
-        double eff_eta = wz_tau1p_eta[ibin];
-        //double err_eta = ewz_tau1p_eta[ibin];
-
-        eff = (eff*eff_eta)/avgrate;
-      }
-
-      if (flavor == 16)  { //weight hadronic tau 3p
-
-        float wz_tau3p[] = {0.000587199,0.00247181,0.0013031,0.00280112,};
-        //float ewz_tau3p[] ={0.000415091,0.000617187,0.000582385,0.00197792,};
-
-        int ibin = 0;
-        if (pt > 15) ibin = 1;
-        if (pt > 20) ibin = 2;
-        if (pt > 40) ibin = 3;
-        if (pt > 80) ibin = 4;
-
-        eff = wz_tau3p[ibin];
-        //err = ewz_tau3p[ibin];
-      }
-
-      return eff;
-    }
-
   }; //closes the majorana class at the very top
 
   //=================================  Plugin hook  =================================//
   // The hook for the plugin system
-  DECLARE_RIVET_PLUGIN(pp_dppjj_llvvjj);
+  DECLARE_RIVET_PLUGIN(minimal_2l2j);
 
 
 }  //closes the Rivet namespace
