@@ -61,12 +61,12 @@ def compile_and_run_routine(routine_name: str, hepmc_file: str) -> None:
         for cmd in RIVET_SETUP:
             script.write(cmd + "\n")
         script.write(f"rivet-build -r {rivet_routine_fpath} |& tee compile.log\n")
-        script.write(f"rivet --analysis={routine_name} --pwd {hepmc_file} |& tee run.log\n")
+        script.write(f"rivet --pwd --analysis={routine_name} {hepmc_file} |& tee run.log\n")
 
     st = os.stat('run_rivet.sh')
     os.chmod('run_rivet.sh', st.st_mode | stat.S_IEXEC)    
     # launch_process(["./run_rivet.sh"], "Rivet")
-    os.system()
+    os.system("./run_rivet.sh")
 
 
 def rivet_analyze_job(config: DictConfig, file_type='*.hepmc.gz', keep_gz_files=False, routine=None) -> None:    
@@ -100,6 +100,6 @@ def rivet_analyze_job(config: DictConfig, file_type='*.hepmc.gz', keep_gz_files=
             except OSError:
                 log.error(f"Could not gunzip file: {fpath}")
                 continue
-
+        
         compile_and_run_routine(routine, input_fpath)
     
