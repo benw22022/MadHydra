@@ -1,6 +1,6 @@
 --- 
 parameters:
-  vevD: 1e-7
+  log10_vevD: -7  # Use log10(vevD) since it make it easier to do range based scans with hydra
   MD0: 500
   MDP: 503
   MDPP: 502

@@ -3,7 +3,7 @@ model: TypeII_NLO_v1_2_UFO            # See: https://arxiv.org/abs/1912.08975
 
 process_name: typeII_single_prod_WWjj
 
-output_dir: ${process.process_name}_${parameters.MDPP}_${parameters.vevD}
+output_dir: ${process.process_name}_${parameters.MDPP}_${parameters.log10_vevD}
 
 rivet: minimal_2l2j
 
@@ -13,7 +13,7 @@ gen_cmd: ['import model ${process.model}',
           'output ${process.output_dir}',
           'launch',
           'shower=pythia8',
-          'set vevd: ${parameters.vevD}',
+          'set vevd: ${eval: "10**${parameters.log10_vevD}"}',
           'set MD0 ${parameters.MDPP}',
           'set MDP ${parameters.MDPP}',
           'set MDPP ${parameters.MDPP}',

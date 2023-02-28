@@ -12,6 +12,7 @@ from omegaconf import DictConfig, OmegaConf
 import source
 from rivet import rivet_analyze_job
 
+OmegaConf.register_new_resolver("eval", eval) # This will allow us to do arithmetic in our yaml cfgs
             
 @hydra.main(config_path="config", config_name="config", version_base='1.1')
 def run_generation(config: DictConfig) -> None:
