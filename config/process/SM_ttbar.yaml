@@ -1,0 +1,15 @@
+---
+model: Standard_Model
+
+process_name: SM_ttbar
+
+output_dir: ${process.process_name}
+
+rivet: minimal_2l2j
+
+gen_cmd: ['generate p p > t t~',
+          'output ${process.output_dir}',
+          'launch',
+          'shower=pythia8',
+          'set nevents ${parameters.nevents}'
+          ]
