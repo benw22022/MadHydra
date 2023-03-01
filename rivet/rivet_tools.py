@@ -71,7 +71,7 @@ def rivet_analyze_job(config: DictConfig, file_type='*.hepmc.gz', routine=None) 
 
     # Work out input file location
     job_dir = config.get("transfer_dir", False)
-    if not job_dir:
+    if not job_dir or not config.batch:
         job_dir = config.hydra.runtime.output_dir
     else:
         job_dir = os.path.join(job_dir, config.process.output_dir)

@@ -6,6 +6,7 @@ import subprocess
 from subprocess import Popen, PIPE, STDOUT
 from typing import List
 import re
+from pathlib import Path
 
 
 def escape_ansi(line):
@@ -56,3 +57,23 @@ def launch_process(cmd_list: List[str], proc_name: str='', shell: bool=False, en
     retcode = process.wait()
         
     return retcode
+
+
+def delete_files_with_extn(directory: str, extn: str) -> List[str]:
+    """
+    Recursivly searches though folders to delete files with matching extension
+    args:
+        directory: str - path to search through
+        extn: str - file extension to delete
+    returns:
+        deleted_files: List[str] - list of files that had been deleted
+    """
+
+    deleted_files = []
+
+    for path in Path(directory).rglob(f'*{extn}'):
+        os.remove(path)
+        log.debug(f"Deleted file: {path}")
+        deleted_files.append(path)
+
+    return deleted_files

@@ -4,6 +4,7 @@ log = logging.getLogger(__name__)
 import os
 from omegaconf import DictConfig
 from hydra.utils import get_original_cwd, to_absolute_path
+from source.utils import delete_files_with_extn
 
 def write_proc_card(config : DictConfig) -> None:
     """
@@ -29,13 +30,13 @@ def get_cleanup_cmd(config: DictConfig, cmd: str=''):
     cmd += f"rm -r {config.process.output_dir}/SubProcesses/*.f \n"
     cmd += f"rm -r {config.process.output_dir}/SubProcesses/*.inc \n"
     cmd += f"rm -r {config.process.output_dir}/SubProcesses/Makefile \n"
-    cmd += f"rm -r {config.process.output_dir}/SubProcesses/done \n"
-    cmd += f"rm -r {config.process.output_dir}/SubProcesses/.txt \n"
-    cmd += f"rm -r {config.process.output_dir}/SubProcesses/.mg \n"
-    cmd += f"rm -r {config.process.output_dir}/SubProcesses/.sh \n"
-    cmd += f"rm -r {config.process.output_dir}/SubProcesses/.dat \n"
-    cmd += f"rm -r {config.process.output_dir}/SubProcesses/randinit \n"
-    cmd += f"rm -r {config.process.output_dir}/SubProcesses/proc_characteristics \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*done \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*.txt \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*.mg \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*.sh \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*.dat \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*randinit \n"
+    cmd += f"rm -r {config.process.output_dir}/SubProcesses/*proc_characteristics \n"
     
     cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/*.f \n"
     cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/*.inc \n"
@@ -47,6 +48,23 @@ def get_cleanup_cmd(config: DictConfig, cmd: str=''):
     cmd += f"rm -r {config.process.output_dir}/SubProcesses/*/.dat \n"
 
     return cmd
+
+def run_cleanup(config) -> None:
+    """
+    Deletes unncessary files that cluster up output directory 
+    Need to prevent file system quoata filling up
+    """
+
+    delete_files_with_extn(config.process.output_dir, '.f')
+    delete_files_with_extn(config.process.output_dir, '.o')
+    delete_files_with_extn(config.process.output_dir, '.inc')
+    delete_files_with_extn(config.process.output_dir, '.txt')
+    delete_files_with_extn(config.process.output_dir, '.mg')
+    delete_files_with_extn(config.process.output_dir, '.sh')
+    delete_files_with_extn(config.process.output_dir, '.dat')
+    os.rmdir(f"{config.process.output_dir}/bin")
+    os.rmdir(f"{config.process.output_dir}/Source")
+    os.rmdir(f"{config.process.output_dir}/lib")
 
 def compose_htc_job(config: DictConfig) -> None:
     """
