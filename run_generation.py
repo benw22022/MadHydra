@@ -55,8 +55,7 @@ def run_generation(config: DictConfig) -> None:
         
         if config.cleanup:
             log.info("Running cleanup")
-            cleanup_cmd = source.get_cleanup_cmd(config) 
-            [source.launch_process(cmd.split()) for cmd in cleanup_cmd.split("\n")]
+            source.run_cleanup(config)
     
 if __name__ == "__main__":
     run_generation()
