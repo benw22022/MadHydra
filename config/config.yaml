@@ -19,18 +19,14 @@ hydra:
     dir:
       generate_output/${now:%Y-%m-%d_%H-%M-%S}_${process.output_dir}
 
-  # multirun settings
+  # multirun settings (uncomment following lines to set sweeper in config)
   # sweeper:
-  #   params:
-  #     parameters: ${process.sweep}
-  #     parameters.MDPP: 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000
-  #     parameters.vevD: 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 0, 0.1, 1.0
-
-      # parameters.MDPP: 84, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 200, 800, 1000, 1200, 1400, 1600, 1800, 2000
-      # parameters.vevD: 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 0, 0.1, 1.0
+  #     params:
+  #       parameters.log10_vevD: range(-7, 1)
+  #       parameters.MDPP: range(100, 2000, 100)
   
   sweep:
-    dir: multirun/${now:%Y-%m-%d}_${process.model}
+    dir: multirun/${now:%Y-%m-%d}_${process.process_name}
     subdir: ${process.output_dir}
 
 # Other settings

@@ -131,4 +131,11 @@ To run in multirun mode set the `-m` flag when running e.g.
 python3 run_generation.py +process=<myProcess> batch=True -m
 ```
 
+You can also specify a parameter sweep via command line e.g.
+```
+python3 run_generation.py +process=typeII_vbs_bosonic parameters.log10_vevD="range(-7, 1)" parameters.MDPP="range(100, 1000, 100)" -m
+```
+
+Note: the `""` around the `range()` function are important 
+
 See the `hydra` [docs](https://hydra.cc/docs/tutorials/basic/running_your_app/multi-run/) for more information on customising the multirun functionatlity.
