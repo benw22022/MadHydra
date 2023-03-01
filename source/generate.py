@@ -2,6 +2,7 @@ import logging
 log = logging.getLogger(__name__)
 
 import os
+import shutil
 from omegaconf import DictConfig
 from hydra.utils import get_original_cwd, to_absolute_path
 from source.utils import delete_files_with_extn
@@ -62,9 +63,9 @@ def run_cleanup(config) -> None:
     delete_files_with_extn(config.process.output_dir, '.mg')
     delete_files_with_extn(config.process.output_dir, '.sh')
     delete_files_with_extn(config.process.output_dir, '.dat')
-    os.rmdir(f"{config.process.output_dir}/bin")
-    os.rmdir(f"{config.process.output_dir}/Source")
-    os.rmdir(f"{config.process.output_dir}/lib")
+    shutil.rmtree(f"{config.process.output_dir}/bin")
+    shutil.rmtree(f"{config.process.output_dir}/Source")
+    shutil.rmtree(f"{config.process.output_dir}/lib")
 
 def compose_htc_job(config: DictConfig) -> None:
     """
