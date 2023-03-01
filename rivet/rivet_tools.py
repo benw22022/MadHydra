@@ -8,8 +8,6 @@ log = logging.getLogger(__name__)
 import os
 import glob
 from omegaconf import DictConfig
-from source import launch_process
-from typing import List
 import gzip
 import shutil
 import inspect
@@ -66,10 +64,10 @@ def compile_and_run_routine(routine_name: str, hepmc_file: str) -> None:
     st = os.stat('run_rivet.sh')
     os.chmod('run_rivet.sh', st.st_mode | stat.S_IEXEC)    
     # launch_process(["./run_rivet.sh"], "Rivet")
-    os.system("./run_rivet.sh")
+    os.system("./run_rivet.sh") # TODO should probably try and avoid os.system() here
 
 
-def rivet_analyze_job(config: DictConfig, file_type='*.hepmc.gz', keep_gz_files=False, routine=None) -> None:    
+def rivet_analyze_job(config: DictConfig, file_type='*.hepmc.gz', routine=None) -> None:    
 
     # Work out input file location
     job_dir = config.get("transfer_dir", False)

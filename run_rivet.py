@@ -1,12 +1,20 @@
 import os
 import glob
 import argparse
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig
 from rivet import rivet_analyze_job
 from multiprocessing import Pool
 
-def run_rivet_in_new_dir(cfg, routine, run_folder='rivet_output'):
-    
+def run_rivet_in_new_dir(cfg: DictConfig, routine: str, run_folder: str='rivet_output') -> None:
+    """
+    Creates a new directory, cds into it, runs rivet and cds out
+    args:
+        cfg: DictConfig - config object
+        routine: str - name of rivet routine to run (must be in rivet/routines). Does not need .cc extsn
+        run_folder: str (default='rivet_output') - location to store results
+    returns:
+        None
+    """
     cwd = os.getcwd()
     run_dir = os.path.join(run_folder, cfg.process.output_dir)
     os.makedirs(run_dir, exist_ok=True)
@@ -16,13 +24,34 @@ def run_rivet_in_new_dir(cfg, routine, run_folder='rivet_output'):
 
     os.chdir(cwd)
 
+
 def main() -> None:
+    """
+    Standalone, non-hydra function for running rivet on MadHydra jobs post-generation
+    Useful if for some reason rivet was not scheduled to run or you want to reanalyse the data with a new routine
+    Script takes one compulsory arguement - 'run_dir' - this is the location of either
+    a standalone MadHydra generation folder or a directory containing such folders.
+    In either case there must be a .hydra directory in the 1st directory level, for single run case; or 
+    2nd level in multirun case.
+    E.g. Single run                     Multirun   
+        - <process-name>                - <multirun-dir>        
+            - .hydra                       - <process-name-1>
+            - <process-name>                   - .hydra
+                                               - <process-name-1>        
+                                           - <process-name-2>
+                                               - .hydra
+                                               - <process-name-2>        
+    The other arguements are:
+        --routine: here you can override the existing routine in the .hydra/config.yaml file
+        --mp: if true, use python multiprocessing. Will run rivet analysis jobs in parallel
+    """
 
     # Parse arguements
     parser = argparse.ArgumentParser()
     parser.add_argument("run_dir", help="directory to look through for simulation jobs", type=str)
     parser.add_argument("--routine", help="if given, overides rivet routine provided in original config", type=str, default='')
     parser.add_argument("--mp", help="Use multiprocessing", type=bool, default=False)
+    parser.add_argument("--cores", help="number of cores to use for mp", type=bool, default=None)
     args = parser.parse_args()
 
     print(args.routine)
@@ -45,7 +74,7 @@ def main() -> None:
 
     # Loop through configs and run routines
     if args.mp:
-        pool = Pool()
+        pool = Pool(args.cores)
         for cfg in configs:
             pool.apply_async(run_rivet_in_new_dir, args = (cfg, args.routine))
         pool.close()
