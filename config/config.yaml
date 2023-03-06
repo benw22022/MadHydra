@@ -2,7 +2,8 @@
 # Hydra specific config settings
 defaults:
   - _self_
-  - parameters.yaml                            # You can add additional config files here             
+  - parameters.yaml                            # You can add additional config files here
+  - condor.yaml             
   - override hydra/job_logging: colorlog
   - override hydra/hydra_logging: colorlog
 
@@ -32,10 +33,12 @@ hydra:
 # Other settings
 madgraph_dir: MG5_aMC_v3_4_1                                 # location of MadGraph directory (relative to repo)
 
+conda_env: tauid                                             # name of conda enviroment (tauid just happens to be the name of mine)
+
 batch: False                                                 # run on htc batch system
 debug: False                                                 # run, but don't run MadGraph or submit batch jobs
 
 # Transfer output (only when running in batch mode)
-transfer_files: True                                         # Location to transfer MG production dir after generation       
-cleanup: True                                                # Delete all the rubbish from the MG production dir
-transfer_dir: /eos/user/b/bewilson/generate_output/${now:%Y-%m-%d_%H-%M-%S}_${process.process_name}   # location so save output files
+transfer_files: ${batch}                                                    # if True then transfer files (here will only do so if batch=True)
+cleanup: True                                                               # Delete all the rubbish from the MG production dir
+transfer_dir: /eos/user/b/bewilson/generate_output/${process.process_name}  # Location to transfer MG production dir after generation

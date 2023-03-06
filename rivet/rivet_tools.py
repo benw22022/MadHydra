@@ -12,7 +12,8 @@ import gzip
 import shutil
 import inspect
 import stat
-
+from source import launch_process
+import subprocess
 
 RIVET_SETUP = (r'export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase',
                r'source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh',
@@ -58,14 +59,17 @@ def compile_and_run_routine(routine_name: str, hepmc_file: str) -> None:
         script.write("#!/bin/sh\n")
         for cmd in RIVET_SETUP:
             script.write(cmd + "\n")
-        script.write(f"rivet-build -r {rivet_routine_fpath} |& tee compile.log\n")
-        script.write(f"rivet --pwd --analysis={routine_name} {hepmc_file} |& tee run.log\n")
+        script.write(f"rivet-build -r {rivet_routine_fpath} |& tee compile_rivet.log\n")
+        script.write(f"rivet --pwd --analysis={routine_name} {hepmc_file} |& tee run_rivet.log\n")
 
     st = os.stat('run_rivet.sh')
     os.chmod('run_rivet.sh', st.st_mode | stat.S_IEXEC)    
+    print("Running rivet script")
+    subprocess.call(["./run_rivet.sh"], cwd=os.getcwd())
     # launch_process(["./run_rivet.sh"], "Rivet")
-    os.system("./run_rivet.sh") # TODO should probably try and avoid os.system() here
 
+    # os.system("./run_rivet.sh") # TODO should probably try and avoid os.system() here
+    print("Done")
 
 def rivet_analyze_job(config: DictConfig, file_type='*.hepmc.gz', routine=None) -> None:    
 

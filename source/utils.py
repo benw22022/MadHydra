@@ -2,7 +2,6 @@ import logging
 log = logging.getLogger(__name__)
 
 import os
-import subprocess
 from subprocess import Popen, PIPE, STDOUT
 from typing import List
 import re

@@ -5,6 +5,8 @@ from omegaconf import OmegaConf, DictConfig
 from rivet import rivet_analyze_job
 from multiprocessing import Pool
 
+OmegaConf.register_new_resolver("eval", eval) # This will allow us to do arithmetic in our yaml cfgs
+
 def run_rivet_in_new_dir(cfg: DictConfig, routine: str, run_folder: str='rivet_output') -> None:
     """
     Creates a new directory, cds into it, runs rivet and cds out
@@ -54,12 +56,14 @@ def main() -> None:
     parser.add_argument("--cores", help="number of cores to use for mp", type=bool, default=None)
     args = parser.parse_args()
 
-    print(args.routine)
+    routine = args.routine
 
     # Get .hydra dirs, check if we're running over a single simulation job. Otherwise look onelayer deeper
     hydra_dirs = glob.glob(os.path.join(args.run_dir, ".hydra"))
     if len(hydra_dirs) == 0:
         hydra_dirs = glob.glob(os.path.join(args.run_dir, "*", ".hydra"))
+
+    print(f"Found {len(hydra_dirs)} simulation directories")
 
     # Load and merge job & hydra configs
     configs = []
@@ -76,12 +80,16 @@ def main() -> None:
     if args.mp:
         pool = Pool(args.cores)
         for cfg in configs:
-            pool.apply_async(run_rivet_in_new_dir, args = (cfg, args.routine))
+            
+            routine = cfg.process.get("rivet", args.routine)
+
+            pool.apply_async(run_rivet_in_new_dir, args = (cfg, routine))
+
         pool.close()
         pool.join()
 
     else:   
-        [run_rivet_in_new_dir(cfg, args.routine) for cfg in configs]
+        [run_rivet_in_new_dir(cfg, cfg.process.get("rivet", args.routine)) for cfg in configs]
 
 
 if __name__ == "__main__":
