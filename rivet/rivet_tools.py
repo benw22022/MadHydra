@@ -2,8 +2,8 @@
 Rivet functions
 """
 
-import logging
-log = logging.getLogger(__name__)
+import logger
+log = logger.get_logger(__name__)
 
 import os
 import glob
@@ -64,12 +64,12 @@ def compile_and_run_routine(routine_name: str, hepmc_file: str) -> None:
 
     st = os.stat('run_rivet.sh')
     os.chmod('run_rivet.sh', st.st_mode | stat.S_IEXEC)    
-    print("Running rivet script")
+    log.info("Running rivet script")
     subprocess.call(["./run_rivet.sh"], cwd=os.getcwd())
     # launch_process(["./run_rivet.sh"], "Rivet")
 
     # os.system("./run_rivet.sh") # TODO should probably try and avoid os.system() here
-    print("Done")
+    log.info("Done")
 
 def rivet_analyze_job(config: DictConfig, file_type='*.hepmc.gz', routine=None) -> None:    
 

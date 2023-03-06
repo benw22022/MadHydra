@@ -1,14 +1,19 @@
-import logging
-log = logging.getLogger(__name__)
+import logger
+log = logger.get_logger(__name__)
 
 import os
 import shutil
-from omegaconf import DictConfig, OmegaConf
-import hydra
+import inspect
 import glob
+import hydra
+from omegaconf import DictConfig, OmegaConf
+import distutils
+from distutils.dir_util import copy_tree
 from hydra.utils import get_original_cwd, to_absolute_path
+
 import source.utils as utils
 import rivet
+
 
 
 def write_proc_card(config : DictConfig) -> None:
@@ -59,13 +64,18 @@ def run_local_generation(config: DictConfig) -> None:
     log.info("Running local generation")
     log.debug(f"Process is: \n {config.process}")
 
+    # Some hacky stuff to workout where MadGraph is 
+    this_filename = inspect.getframeinfo(inspect.currentframe()).filename
+    this_filepath = os.path.dirname(os.path.dirname(os.path.abspath(this_filename)))
+    mg_path = os.path.join(this_filepath, config.madgraph_dir)
+    madgraph_exec = os.path.join(mg_path, 'bin', 'mg5_aMC')
+
     write_proc_card(config)
-    madgraph_exec = os.path.join(to_absolute_path(config.madgraph_dir), 'bin', 'mg5_aMC')
     
     if config.debug:
         return
     
-    utils.launch_process([madgraph_exec, 'proc_card.dat'], 'MadGraph')
+    utils.launch_process([madgraph_exec, 'proc_card.dat'], 'MadGraph', logfile='log.generate')
     
     if not OmegaConf.is_missing(config, config.process['rivet']):
         log.info(f"Running rivet routine {config.process.rivet}")
@@ -80,10 +90,13 @@ def run_local_generation(config: DictConfig) -> None:
         os.makedirs(transfer_loc, exist_ok=True)
 
         # madgraph dir
-        shutil.copy(config.process.output_dir, transfer_loc)
+        os.system("ls")
+        print(config.process.output_dir, transfer_loc)
 
-        # hydra cfgs
-        shutil.copy('.hydra', transfer_loc)
+        copy_tree(config.process.output_dir, transfer_loc)
+        
+        copy_tree('.hydra', transfer_loc)
+        
         
         # log files 
         [shutil.copy(f) for f in glob.glob("*log*")]

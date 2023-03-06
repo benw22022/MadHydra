@@ -1,8 +1,8 @@
 """
 Main steering script
 """
-import logging
-log = logging.getLogger(__name__)
+import logger
+log = logger.get_logger(__name__)
 
 import os
 import shutil

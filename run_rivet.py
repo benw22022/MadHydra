@@ -1,3 +1,6 @@
+import logger
+log = logger.get_logger(__name__)
+
 import os
 import glob
 import argparse
@@ -63,7 +66,7 @@ def main() -> None:
     if len(hydra_dirs) == 0:
         hydra_dirs = glob.glob(os.path.join(args.run_dir, "*", ".hydra"))
 
-    print(f"Found {len(hydra_dirs)} simulation directories")
+    log.info(f"Found {len(hydra_dirs)} simulation directories")
 
     # Load and merge job & hydra configs
     configs = []

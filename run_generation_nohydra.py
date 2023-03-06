@@ -1,7 +1,11 @@
+import logger
+log = logger.get_logger(__name__)
+
 import os
 import source
 import argparse
 from omegaconf import OmegaConf
+from distutils.dir_util import copy_tree
 
 OmegaConf.register_new_resolver("eval", eval) # This will allow us to do arithmetic in our yaml cfgs
 
@@ -19,14 +23,20 @@ def run_generation_nohydra():
     parser.add_argument("hydra_dir", help="location of .hydra dir containing configs", type=str)
     args = parser.parse_args()
 
-    job_conf_fpath = os.path.join(args.hydra_dir, "config.yaml")
-    hydra_conf_fpath = os.path.join(args.hydra_dir, "hydra.yaml")
+    # Copy configs over, not strictly neccessary but useful for book keeping
+    os.system("ls")
+    copy_tree(args.hydra_dir, ".hydra")
+
+    # Load an merge configs
+    job_conf_fpath = os.path.join(".hydra", "config.yaml")
+    hydra_conf_fpath = os.path.join(".hydra", "hydra.yaml")
     
     job_conf = OmegaConf.load(job_conf_fpath)
     hydra_conf = OmegaConf.load(hydra_conf_fpath)
 
     config = OmegaConf.merge(job_conf, hydra_conf)
 
+    # Run generation using the merged configs
     source.run_local_generation(config)
     
 if __name__ == "__main__":

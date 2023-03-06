@@ -5,7 +5,7 @@ condor:
   log   : generation_$(ClusterID).log
   output: generation_$(ClusterID)_$(ProcId).out
   error : generation_$(ClusterID)_$(ProcId).error
-
+  should_transfer_files: yes
   Requirements: (OpSysAndVer == "CentOS7")
   +MyProject  : "af-atlas"
   +JobFlavour : "tomorrow"
