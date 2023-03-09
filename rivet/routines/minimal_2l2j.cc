@@ -1,8 +1,8 @@
-//=================================  Introduction  =================================//<
+//=================================  Introduction  =================================//
 // -*- C++ -*-
-// Implementation of ATLAS_2012_I1204447.cc 
-// Writes an NTuple of lepton, jet and tau kinematics
-
+// Writes an NTuple of lepton, jet, tau, photon and neutrino kinematics
+// Requires at least two jets and two leptons with very loose selection requirements
+//
 //=================================  Libraries  =================================//
 #include "Rivet/Analysis.hh"
 #include "Rivet/Projections/FinalState.hh"
