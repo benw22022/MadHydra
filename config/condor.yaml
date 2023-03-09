@@ -1,4 +1,5 @@
 ---
+# Settings for condor submission
 condor:
   universe  : vanilla
   executable: submit.sh

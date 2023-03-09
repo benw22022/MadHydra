@@ -2,9 +2,8 @@
 Testing steering script
 """
 
-import logging
-log = logging.getLogger(__name__)
-# TODO: logging like this doesn't work without hydra 
+import logger
+log = logger.get_logger(__name__)
 
 import tests
 

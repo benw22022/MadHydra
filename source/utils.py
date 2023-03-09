@@ -51,17 +51,18 @@ def launch_process(cmd_list: List[str], proc_name: str='', shell: bool=False, en
         return 0
     
     stdout=PIPE
-    if logfile:
-        stdout = open(logfile, 'w')
+    # if logfile:
+    #     stdout = open(logfile, 'w')
 
     process = Popen(cmd_list, stdout=stdout, stderr=STDOUT, shell=shell, env=my_env)
+
     with process.stdout:
         log_subprocess_output(process.stdout, proc_name)
         
     retcode = process.wait()
     
-    if logfile:
-        stdout.close()
+    # if logfile:
+    #     stdout.close()
 
     return retcode
 

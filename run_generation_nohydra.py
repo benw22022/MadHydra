@@ -24,8 +24,8 @@ def run_generation_nohydra():
     args = parser.parse_args()
 
     # Copy configs over, not strictly neccessary but useful for book keeping
-    os.system("ls")
     copy_tree(args.hydra_dir, ".hydra")
+    os.system("ls")
 
     # Load an merge configs
     job_conf_fpath = os.path.join(".hydra", "config.yaml")

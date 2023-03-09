@@ -232,19 +232,19 @@ namespace Rivet {
 
         // Final state including all AntiKt 04 Jets
         VetoedFinalState vfs;
-        vfs.addVetoPairId(PID::MUON);
+        vfs.addVetoPairId(PID::MUON); // TODO check what this does
         declare(FastJets(vfs, FastJets::ANTIKT, 0.4), "AntiKtJets04");
 
         // Final state including all unstable particles (including taus)
         declare(UnstableParticles(Cuts::abseta < 5.0 && Cuts::pT > 5*GeV), "UFS");
 
         // Final state including all electrons
-        IdentifiedFinalState elecs(Cuts::abseta < 2.47 && Cuts::pT > 10*GeV);
+        IdentifiedFinalState elecs(Cuts::abseta < 2.47 && Cuts::pT > 5*GeV);
         elecs.acceptIdPair(PID::ELECTRON);
         declare(elecs, "elecs");
 
         // Final state including all muons
-        IdentifiedFinalState muons(Cuts::abseta < 2.5 && Cuts::pT > 10*GeV);
+        IdentifiedFinalState muons(Cuts::abseta < 2.5 && Cuts::pT > 5*GeV);
         muons.acceptIdPair(PID::MUON);
         declare(muons, "muons");
 
@@ -347,7 +347,6 @@ namespace Rivet {
         // Veto event if we have < 2 leptons
         cutflow.BookCut("< 2 leptons");
         if (recon_leptons.size() + tau_candidates.size() < 2){
-          
           vetoEvent;
         }
 

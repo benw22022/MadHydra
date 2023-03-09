@@ -8,6 +8,7 @@ log = logger.get_logger(__name__)
 import os
 import glob
 from omegaconf import DictConfig
+from pathlib import Path
 import gzip
 import shutil
 import inspect
@@ -84,15 +85,12 @@ def rivet_analyze_job(config: DictConfig, file_type='*.hepmc.gz', routine=None) 
         # Otherwise this is a current MadHydra generation and we're already in the run dir
         else:
             job_dir = os.getcwd()
-    else:
-        job_dir = os.path.join(job_dir, config.process.output_dir)
-
-    events_dir = os.path.join(job_dir, config.process.output_dir, 'Events')
-    input_files = glob.glob(os.path.join(events_dir, '*', f'{file_type}'))
+    
+    input_files = [path for path in Path(job_dir).rglob(f'{file_type}')]
 
     # If no hepmc files were found
     if len(input_files) < 1:
-        log.error(f"No hepmc files found on path {events_dir}")
+        log.error(f"No hepmc files found on path {job_dir}")
         return
 
     # Override rivet routine in config if requested
@@ -102,7 +100,7 @@ def rivet_analyze_job(config: DictConfig, file_type='*.hepmc.gz', routine=None) 
     # Decompress files if neccessary, compile and run routine
     for fpath in input_files:
         input_fpath = fpath
-        if fpath.endswith('.gz'):
+        if str(fpath).endswith('.gz'):
             try:
                 log.info(f"Unzipping file {fpath}")
                 input_fpath = run_gunzip(fpath)
