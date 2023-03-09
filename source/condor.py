@@ -11,6 +11,7 @@ from hydra.utils import get_original_cwd, to_absolute_path
 def submit_job(config: DictConfig) -> None:
     """
     Uses the htcondor python bindings to submit a job to condor batch system
+    Note: Had issues with using the htcondor python API on lxplus - so you may need to use os.system instead
     args:
         config: DictConf - config object to generate
     returns:
@@ -19,7 +20,7 @@ def submit_job(config: DictConfig) -> None:
 
 
     cmd = f"#!/bin/bash \n\
-# eval \"$(conda shell.bash hook)\" \n\
+# eval \"$(conda shell.bash hook)\" # You can use this on lxplus\n\
 # conda activate {config.conda_env} \n\
 source  {config.conda_dir}/bin/activate {config.conda_env} \n\
 python3 {get_original_cwd()}/run_generation_nohydra.py {os.getcwd()}/.hydra \n\
