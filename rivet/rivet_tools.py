@@ -32,10 +32,10 @@ def run_gunzip(fpath: str) -> None:
     """
     
     with gzip.open(fpath, 'rb') as f_in:
-        with open(fpath.replace('.gz', ''), 'wb') as f_out:
+        with open(str(fpath).replace(".gz", ""), 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
     
-    return fpath.replace('.gz', '')
+    return str(fpath).replace('.gz', '')
 
 def compile_and_run_routine(routine_name: str, hepmc_file: str) -> None:
     """
