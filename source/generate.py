@@ -86,7 +86,7 @@ def run_local_generation(config: DictConfig) -> None:
         run_cleanup(config)
 
     if config.transfer_files:
-        transfer_loc = os.path.join(config.transfer_dir, config.process.process_name)
+        transfer_loc = config.transfer_dir
         os.makedirs(transfer_loc, exist_ok=True)
 
         # madgraph dir
@@ -95,13 +95,19 @@ def run_local_generation(config: DictConfig) -> None:
 
         copy_tree(config.process.output_dir, transfer_loc)
         
-        copy_tree('.hydra', transfer_loc)
+        hydra_cfg_dir = os.path.join(transfer_loc, '.hydra')
+        os.makedirs(hydra_cfg_dir, exist_ok=True)
         
+        print(f"hydra_cfg_dir = {hydra_cfg_dir}")
+
+        shutil.copy('.hydra/hydra.yaml', hydra_cfg_dir)
+        shutil.copy('.hydra/config.yaml', hydra_cfg_dir)
+        shutil.copy('.hydra/overrides.yaml', hydra_cfg_dir)        
         
         # log files 
-        [shutil.copy(f) for f in glob.glob("*log*")]
+        [shutil.copy(f, transfer_loc) for f in glob.glob("*log*")]
 
         # root files
-        [shutil.copy(f) for f in glob.glob(".root")]
+        [shutil.copy(f, transfer_loc) for f in glob.glob(".root")]
         
         
