@@ -19,8 +19,9 @@ def submit_job(config: DictConfig) -> None:
 
 
     cmd = f"#!/bin/bash \n\
-eval \"$(conda shell.bash hook)\" \n\
-conda activate {config.conda_env} \n\
+# eval \"$(conda shell.bash hook)\" \n\
+# conda activate {config.conda_env} \n\
+source  {config.conda_dir}/bin/activate {config.conda_env} \n\
 python3 {get_original_cwd()}/run_generation_nohydra.py {os.getcwd()}/.hydra \n\
 "
 
@@ -38,10 +39,10 @@ python3 {get_original_cwd()}/run_generation_nohydra.py {os.getcwd()}/.hydra \n\
             file.write(f"{key} = {value}\n")
         file.write("queue")
 
-    os.system("condor_submit htc.submit")
-    # hostname_job = htcondor.Submit(config.condor)
+    # os.system("condor_submit htc.submit")
+    hostname_job = htcondor.Submit(config.condor)
 
-    # schedd = htcondor.Schedd()                   
-    # submit_result = schedd.submit(hostname_job)   # TODO Add back in batch-name to jobs
-    # log.info(f"submitted job {submit_result.cluster()}")               
+    schedd = htcondor.Schedd()                   
+    submit_result = schedd.submit(hostname_job)   # TODO Add back in batch-name to jobs
+    log.info(f"submitted job {submit_result.cluster()}")               
 

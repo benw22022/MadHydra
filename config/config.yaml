@@ -31,9 +31,10 @@ hydra:
     subdir: ${process.output_dir}
 
 # Other settings
-madgraph_dir: MG5_aMC_v3_4_1                                 # location of MadGraph directory (relative to repo)
+madgraph_dir: MG5_aMC_v3_4_2                                 # location of MadGraph directory (relative to repo)
 
-conda_env: tauid                                             # name of conda enviroment (tauid just happens to be the name of mine)
+conda_dir: /home/bewilson/miniconda3                         # location of conda installation directory
+conda_env: madhydra                                          # name of conda enviroment
 
 batch: False                                                 # run on htc batch system
 debug: False                                                 # run, but don't run MadGraph or submit batch jobs
@@ -41,7 +42,7 @@ debug: False                                                 # run, but don't ru
 # Transfer output (only when running in batch mode)
 transfer_files: ${batch}                                                    # if True then transfer files (here will only do so if batch=True)
 cleanup: True                                                               # Delete all the rubbish from the MG production dir
-transfer_dir: /eos/user/b/bewilson/generate_output/${process.process_name}  # Location to transfer MG production dir after generation
+transfer_dir: /data/bewilson/generate_output/${process.process_name}  # Location to transfer MG production dir after generation
 
 # Athena Generation
 use_athena: False
