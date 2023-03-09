@@ -5,15 +5,10 @@ import os
 import shutil
 import inspect
 import glob
-import hydra
 from omegaconf import DictConfig, OmegaConf
-import distutils
 from distutils.dir_util import copy_tree
-from hydra.utils import get_original_cwd, to_absolute_path
-
 import source.utils as utils
 import rivet
-
 
 
 def write_proc_card(config : DictConfig) -> None:
@@ -55,6 +50,9 @@ def run_cleanup(config: DictConfig) -> None:
 def run_local_generation(config: DictConfig) -> None:
     """
     Runs madgraph generation in current working directory
+    If requested by config will also run rivet routine provided
+    Also has functionality to perform some clean up of the MadGraph production directory
+    and will also transfer the files if running on batch to given folder
     args:
         config: DictConfig - config object
     returns:

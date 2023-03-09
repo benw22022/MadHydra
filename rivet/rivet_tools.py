@@ -16,6 +16,7 @@ import stat
 from source import launch_process
 import subprocess
 
+# bash commands for setting up enviroment with rivet
 RIVET_SETUP = (r'export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase',
                r'source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh',
                r'asetup 23.6.1, AthGeneration',
@@ -69,7 +70,15 @@ def compile_and_run_routine(routine_name: str, hepmc_file: str) -> None:
     subprocess.call(["./run_rivet.sh"], cwd=os.getcwd())
 
 def rivet_analyze_job(config: DictConfig, file_type='*.hepmc.gz', routine=None) -> None:    
-
+    """
+    Runs rivet analysis for a simulation job
+    Args:
+        config (DictConfig): hydra config object
+        file_type (str, optional): output file extension from MadGraph. Defaults to '*.hepmc.gz'.
+        routine (_type_, optional): Name of rivet routine to run, if None then will use routine defined in config. Defaults to None.
+    Returns:
+        None
+    """
     # Work out input file location
     job_dir = config.get("transfer_dir", False)
     if not job_dir or not config.batch:

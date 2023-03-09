@@ -11,7 +11,7 @@ OmegaConf.register_new_resolver("eval", eval) # This will allow us to do arithme
 
 def run_generation_nohydra():
     """
-    Run generation without invoking hydra - useful for runnig generation on htcondor batch system
+    Run generation without invoking hydra - useful for runnig generation on htcondor batch system (i.e. This is basically a hack to get it to work)
     Takes one mandatory command line arguement: hydra_dir
     This is the path to the .hydra director containing the config.yaml and hydra.yaml config files
     We need this to rebuild the DictConfig object and run without needing to invoke hydra

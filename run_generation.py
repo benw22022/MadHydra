@@ -1,16 +1,13 @@
 """
 Main steering script
+_____________________________________
 """
 import logger
 log = logger.get_logger(__name__)
 
-import os
-import shutil
 import hydra
-from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 import source
-from rivet import rivet_analyze_job
 
 OmegaConf.register_new_resolver("eval", eval) # This will allow us to do arithmetic in our yaml cfgs
             

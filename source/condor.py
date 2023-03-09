@@ -3,9 +3,8 @@ log = logger.get_logger(__name__)
 
 import os
 import htcondor
-import classad
 from omegaconf import DictConfig
-from hydra.utils import get_original_cwd, to_absolute_path
+from hydra.utils import get_original_cwd
 
 
 def submit_job(config: DictConfig) -> None:

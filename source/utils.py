@@ -2,13 +2,21 @@ import logger
 log = logger.get_logger(__name__)
 
 import os
-from subprocess import Popen, PIPE, STDOUT
-from typing import List
 import re
 from pathlib import Path
+from typing import List
+from subprocess import Popen, PIPE, STDOUT
 
 
-def escape_ansi(line):
+def escape_ansi(line: str):
+    """
+    An attempt to clense stdout of ansi escape charaters for logfile writing
+    TODO: This doesn't really work - improvement welcome!
+    Args:
+        line (str): line from stdout
+    Returns:
+        str: A new line with (hopefully) the ansi escape characters removed
+    """
     try:
         ansi_escape =re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
         return ansi_escape.sub('', line)
@@ -51,7 +59,7 @@ def launch_process(cmd_list: List[str], proc_name: str='', shell: bool=False, en
         return 0
     
     stdout=PIPE
-    # if logfile:
+    # if logfile: # TODO: workout how to redirect to log file
     #     stdout = open(logfile, 'w')
 
     process = Popen(cmd_list, stdout=stdout, stderr=STDOUT, shell=shell, env=my_env)
