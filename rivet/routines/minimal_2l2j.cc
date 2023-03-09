@@ -121,15 +121,35 @@ namespace Rivet {
       std::vector<double> b_tau_py;
       std::vector<double> b_tau_pz;
 
-      std::vector<double> b_nu_pt;
-      std::vector<double> b_nu_rap;
-      std::vector<double> b_nu_phi;
-      std::vector<double> b_nu_mass;
-      std::vector<double> b_nu_energy;
-      std::vector<double> b_nu_px;
-      std::vector<double> b_nu_py;
-      std::vector<double> b_nu_pz;
-      std::vector<long>   b_nu_pid;
+      std::vector<double> b_tau_daughter_pt;
+      std::vector<double> b_tau_daughter_rap;
+      std::vector<double> b_tau_daughter_phi;
+      std::vector<double> b_tau_daughter_mass;
+      std::vector<double> b_tau_daughter_energy;
+      std::vector<double> b_tau_daughter_px;
+      std::vector<double> b_tau_daughter_py;
+      std::vector<double> b_tau_daughter_pz;
+      std::vector<double> b_tau_daughter_pid;
+
+      std::vector<double> b_neutrino_pt;
+      std::vector<double> b_neutrino_rap;
+      std::vector<double> b_neutrino_phi;
+      std::vector<double> b_neutrino_mass;
+      std::vector<double> b_neutrino_energy;
+      std::vector<double> b_neutrino_px;
+      std::vector<double> b_neutrino_py;
+      std::vector<double> b_neutrino_pz;
+      std::vector<long>   b_neutrino_pid;
+
+      std::vector<double> b_photon_pt;
+      std::vector<double> b_photon_rap;
+      std::vector<double> b_photon_phi;
+      std::vector<double> b_photon_mass;
+      std::vector<double> b_photon_energy;
+      std::vector<double> b_photon_px;
+      std::vector<double> b_photon_py;
+      std::vector<double> b_photon_pz;
+      std::vector<long>   b_photon_pid;
 
       double b_HTlep;
       double b_HTjets;
@@ -184,7 +204,6 @@ namespace Rivet {
         m_OutputTree->Branch("lep_pz",     &b_lep_pz    );
         m_OutputTree->Branch("lep_pid",    &b_lep_pid   );
 
-        m_OutputTree->Branch("tau_pt",     &b_tau_pt    );
         m_OutputTree->Branch("tau_rap",    &b_tau_rap   );
         m_OutputTree->Branch("tau_phi",    &b_tau_pt    );
         m_OutputTree->Branch("tau_mass",   &b_tau_mass  );
@@ -193,6 +212,36 @@ namespace Rivet {
         m_OutputTree->Branch("tau_py",     &b_tau_py    );
         m_OutputTree->Branch("tau_pz",     &b_tau_pz    );
         m_OutputTree->Branch("tau_pid",    &b_tau_pid   );
+
+        m_OutputTree->Branch("tau_daughter_pt",     &b_tau_daughter_pt    );
+        m_OutputTree->Branch("tau_daughter_rap",    &b_tau_daughter_rap   );
+        m_OutputTree->Branch("tau_daughter_phi",    &b_tau_daughter_pt    );
+        m_OutputTree->Branch("tau_daughter_mass",   &b_tau_daughter_mass  );
+        m_OutputTree->Branch("tau_daughter_energy", &b_tau_daughter_energy);
+        m_OutputTree->Branch("tau_daughter_px",     &b_tau_daughter_px    );
+        m_OutputTree->Branch("tau_daughter_py",     &b_tau_daughter_py    );
+        m_OutputTree->Branch("tau_daughter_pz",     &b_tau_daughter_pz    );
+        m_OutputTree->Branch("tau_daughter_pid",    &b_tau_daughter_pid   );
+
+        m_OutputTree->Branch("photon_pt",    &b_photon_pt   );
+        m_OutputTree->Branch("photon_rap",    &b_photon_rap   );
+        m_OutputTree->Branch("photon_phi",    &b_photon_pt    );
+        m_OutputTree->Branch("photon_mass",   &b_photon_mass  );
+        m_OutputTree->Branch("photon_energy", &b_photon_energy);
+        m_OutputTree->Branch("photon_px",     &b_photon_px    );
+        m_OutputTree->Branch("photon_py",     &b_photon_py    );
+        m_OutputTree->Branch("photon_pz",     &b_photon_pz    );
+        m_OutputTree->Branch("photon_pid",    &b_photon_pid   );
+
+        m_OutputTree->Branch("neutrino_pt",     &b_neutrino_pt   );
+        m_OutputTree->Branch("neutrino_rap",    &b_neutrino_rap   );
+        m_OutputTree->Branch("neutrino_phi",    &b_neutrino_pt    );
+        m_OutputTree->Branch("neutrino_mass",   &b_neutrino_mass  );
+        m_OutputTree->Branch("neutrino_energy", &b_neutrino_energy);
+        m_OutputTree->Branch("neutrino_px",     &b_neutrino_px    );
+        m_OutputTree->Branch("neutrino_py",     &b_neutrino_py    );
+        m_OutputTree->Branch("neutrino_pz",     &b_neutrino_pz    );
+        m_OutputTree->Branch("neutrino_pid",    &b_neutrino_pid   );
 
         m_OutputTree->Branch("eTmiss",     &b_eTmiss,  "eTmiss/D");
         m_OutputTree->Branch("HTlep",      &b_HTlep,   "HTlep/D");
@@ -232,7 +281,8 @@ namespace Rivet {
 
         // Final state including all AntiKt 04 Jets
         VetoedFinalState vfs;
-        vfs.addVetoPairId(PID::MUON); // TODO check what this does
+        vfs.addVetoPairId(PID::MUON); // this removes Muons/Taus from visible final state - prevents inclusion in jets?
+        vfs.addVetoPairId(PID::TAU);
         declare(FastJets(vfs, FastJets::ANTIKT, 0.4), "AntiKtJets04");
 
         // Final state including all unstable particles (including taus)
@@ -252,7 +302,7 @@ namespace Rivet {
         // define photon
         IdentifiedFinalState photon(fs);
         photon.acceptIdPair(PID::PHOTON); 
-        declare(photon,"photon");
+        declare(photon,"photons");
 
         // identify the Neutrinos
         IdentifiedFinalState neutrinos(fs);
@@ -290,24 +340,46 @@ namespace Rivet {
         // Sum up the weights^2 --> This happens to be equal to the variance
         var_sumW += std::pow(weight, 2);
 
-        //================================= Building Candidate Leptons  -- Dressed =================================//
-        // Muons
-        Particles muon_candidates;
+        //================================= Building Candidate Particles =================================//
+        
+        // Jets (all anti-kt R=0.4 jets with pT > 20 GeV and eta < 4.9)
+        Jets jet_candidates;
+        Jets tau_jet_candidates;
+        for (const Jet& jet : apply<FastJets>(event, "AntiKtJets04").jetsByPt(20*GeV)) {
+          if (jet.abseta() < 4.9) {
+            if(!jet.tauTagged()) jet_candidates.push_back(jet); 
+            else tau_jet_candidates.push_back(jet);
+          }
+          
+        }
+
+        // Veto event if we have < 2 jets
+        cutflow.BookCut("< 2 jets");
+        if (jet_candidates.size() < 2){
+          cutflow.Count("< 2 jets");
+          vetoEvent;
+        }
+
         Particles recon_leptons;
+        Particles tau_daughter_leptons;
         const Particles charged_tracks    = apply<ChargedFinalState>(event, "CFS").particles();
         const Particles visible_particles = apply<VisibleFinalState>(event, "VFS").particles();
         
+        // Muons
+        Particles muon_candidates;
+        Particles tau_muon_candidates;
         for (const Particle& mu : apply<IdentifiedFinalState>(event, "muons").particlesByPt()) {
-          muon_candidates.push_back(mu);
-          recon_leptons.push_back(mu);
+          if (!mu.fromTau()){ muon_candidates.push_back(mu); recon_leptons.push_back(mu);}
+          else{  tau_daughter_leptons.push_back(mu); }
         }
 
 
         // Electrons
         Particles electron_candidates;
+        Particles tau_electron_candidates;
         for (const Particle& e : apply<IdentifiedFinalState>(event, "elecs").particlesByPt()) {
-            electron_candidates.push_back(e);
-            recon_leptons.push_back(e);
+            if (!e.fromTau()){ electron_candidates.push_back(e); recon_leptons.push_back(e);}
+            else{ tau_daughter_leptons.push_back(e); }
         }
 
 
@@ -331,10 +403,16 @@ namespace Rivet {
         }
 
 
-        // Jets (all anti-kt R=0.4 jets with pT > 20 GeV and eta < 4.9)
-        Jets jet_candidates;
-        for (const Jet& jet : apply<FastJets>(event, "AntiKtJets04").jetsByPt(20*GeV)) {
-          if (jet.abseta() < 4.9) jet_candidates.push_back(jet);
+        // Photons
+        Particles photon_candidates;
+        for (const Particle& a : apply<IdentifiedFinalState>(event, "photons").particlesByPt()) {
+          photon_candidates.push_back(a);
+        }
+
+        // neutrinos
+        Particles neutrino_candidates;
+        for (const Particle& nu : apply<IdentifiedFinalState>(event, "neutrinos").particlesByPt()) {
+          neutrino_candidates.push_back(nu);
         }
 
 
@@ -349,15 +427,6 @@ namespace Rivet {
         if (recon_leptons.size() + tau_candidates.size() < 2){
           vetoEvent;
         }
-
-        // Veto event if we have < 2 jets
-        cutflow.BookCut("< 2 jets");
-        if (jet_candidates.size() < 2){
-          cutflow.Count("< 2 jets");
-          vetoEvent;
-        }
-
-
 
         // Calculate HTlep, fill lepton pT histograms & store chosen combination of 3 leptons
         double HTlep = 0.;
@@ -386,30 +455,66 @@ namespace Rivet {
           b_tau_py.push_back(p.py());
           b_tau_pz.push_back(p.pz());
           b_tau_pid.push_back(p.pid());
-      }
+        }
 
-      for(const Jet &p : jet_candidates){
-        b_jet_pt.push_back(p.pT());
-        b_jet_rap.push_back(p.rapidity());
-        b_jet_phi.push_back(p.phi());
-        b_jet_mass.push_back(p.mass());
-        b_jet_energy.push_back(p.energy());
-        b_jet_px.push_back(p.px() );
-        b_jet_py.push_back(p.py());
-        b_jet_pz.push_back(p.pz());
-      }
+        for(const Jet &p : jet_candidates){
+          b_jet_pt.push_back(p.pT());
+          b_jet_rap.push_back(p.rapidity());
+          b_jet_phi.push_back(p.phi());
+          b_jet_mass.push_back(p.mass());
+          b_jet_energy.push_back(p.energy());
+          b_jet_px.push_back(p.px() );
+          b_jet_py.push_back(p.py());
+          b_jet_pz.push_back(p.pz());
+        }
 
-      // for(const Particle &p : neutrinos){
-      //   b_nu_pt.push_back(p.pT());
-      //   b_nu_rap.push_back(p.rapidity());
-      //   b_nu_phi.push_back(p.phi());
-      //   b_nu_mass.push_back(p.mass());
-      //   b_nu_energy.push_back(p.energy());
-      //   b_nu_px.push_back(p.px() );
-      //   b_nu_py.push_back(p.py());
-      //   b_nu_pz.push_back(p.pz());
-      //   b_nu_pid.push_back(p.pid());
-      // }
+        for(const Particle &p : photon_candidates){
+            b_photon_pt.push_back(p.pT());
+            b_photon_rap.push_back(p.rapidity());
+            b_photon_phi.push_back(p.phi());
+            b_photon_mass.push_back(p.mass());
+            b_photon_energy.push_back(p.energy());
+            b_photon_px.push_back(p.px() );
+            b_photon_py.push_back(p.py());
+            b_photon_pz.push_back(p.pz());
+            b_photon_pid.push_back(p.pid());
+        }
+        
+        for(const Particle &p : neutrino_candidates){
+          b_neutrino_pt.push_back(p.pT());
+          b_neutrino_rap.push_back(p.rapidity());
+          b_neutrino_phi.push_back(p.phi());
+          b_neutrino_mass.push_back(p.mass());
+          b_neutrino_energy.push_back(p.energy());
+          b_neutrino_px.push_back(p.px() );
+          b_neutrino_py.push_back(p.py());
+          b_neutrino_pz.push_back(p.pz());
+          b_neutrino_pid.push_back(p.pid());
+        }
+
+        for(const Particle &p : tau_daughter_leptons){
+          b_tau_daughter_pt.push_back(p.pT());
+          b_tau_daughter_rap.push_back(p.rapidity());
+          b_tau_daughter_phi.push_back(p.phi());
+          b_tau_daughter_mass.push_back(p.mass());
+          b_tau_daughter_energy.push_back(p.energy());
+          b_tau_daughter_px.push_back(p.px() );
+          b_tau_daughter_py.push_back(p.py());
+          b_tau_daughter_pz.push_back(p.pz());
+          b_tau_daughter_pid.push_back(p.pid());
+        }
+
+        for(const Jet &p : tau_jet_candidates){
+          b_tau_daughter_pt.push_back(p.pT());
+          b_tau_daughter_rap.push_back(p.rapidity());
+          b_tau_daughter_phi.push_back(p.phi());
+          b_tau_daughter_mass.push_back(p.mass());
+          b_tau_daughter_energy.push_back(p.energy());
+          b_tau_daughter_px.push_back(p.px() );
+          b_tau_daughter_py.push_back(p.py());
+          b_tau_daughter_pz.push_back(p.pz());
+          b_tau_daughter_pid.push_back(-999);
+        }
 
       // Calculate HTjets
       double HTjets = 0.;
@@ -480,16 +585,36 @@ namespace Rivet {
       b_tau_px.clear();
       b_tau_py.clear();
       b_tau_pz.clear();
+
+      b_tau_daughter_pt.clear();
+      b_tau_daughter_rap.clear();
+      b_tau_daughter_phi.clear();
+      b_tau_daughter_mass.clear();
+      b_tau_daughter_energy.clear();
+      b_tau_daughter_pid.clear();
+      b_tau_daughter_px.clear();
+      b_tau_daughter_py.clear();
+      b_tau_daughter_pz.clear();
       
-      b_nu_pt.clear();
-      b_nu_rap.clear();
-      b_nu_phi.clear();
-      b_nu_mass.clear();
-      b_nu_energy.clear();
-      b_nu_px.clear();
-      b_nu_py.clear();
-      b_nu_pz.clear();
-      b_nu_pid.clear();
+      b_photon_pt.clear();
+      b_photon_rap.clear();
+      b_photon_phi.clear();
+      b_photon_mass.clear();
+      b_photon_energy.clear();
+      b_photon_px.clear();
+      b_photon_py.clear();
+      b_photon_pz.clear();
+      b_photon_pid.clear();
+      
+      b_neutrino_pt.clear();
+      b_neutrino_rap.clear();
+      b_neutrino_phi.clear();
+      b_neutrino_mass.clear();
+      b_neutrino_energy.clear();
+      b_neutrino_px.clear();
+      b_neutrino_py.clear();
+      b_neutrino_pz.clear();
+      b_neutrino_pid.clear();
 
       cutflow.Count("final");
 
