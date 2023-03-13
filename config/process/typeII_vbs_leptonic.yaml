@@ -1,15 +1,21 @@
 ---
 model: TypeII_NLO_v1_2_UFO              # See: https://arxiv.org/abs/1912.08975
 
-process_name: typeII_single_prod_mmjj
+process_name: typeII_single_prod_lljj
 
 output_dir: ${process.process_name}_${parameters.MDPP}_${parameters.log10_vevD}
 
 rivet: minimal_2l2j
 
+sweep:
+    dir: multirun/${now:%Y-%m-%d}_${process.processs_name}
+    subdir: ${process.output_dir}
+
 gen_cmd: ['import model ${process.model}',
-          'generate p p > l+ l+ j j',
-          'add process p p > l- l- j j',
+          'define lep+ e+ mu+ ta+',
+          'define lep- e- mu- ta-',
+          'generate p p > lep+ lep+ j j',
+          'add process p p > lep- lep- j j',
           'output ${process.output_dir}',
           'launch ',
           'shower=pythia8',
