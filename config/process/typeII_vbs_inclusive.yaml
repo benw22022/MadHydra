@@ -7,10 +7,6 @@ output_dir: '${process.process_name}_${parameters.MDPP}_${eval: "10**${parameter
 
 rivet: minimal_2l2j
 
-sweep:
-    dir: multirun/${now:%Y-%m-%d}_${process.processs_name}
-    subdir: ${process.output_dir}
-
 gen_cmd: ['import model ${process.model}',
           'generate p p > d++ j j',
           'add process p p > d-- j j',
