@@ -68,7 +68,7 @@ def compile_and_run_routine(routine_name: str, hepmc_file: str) -> None:
 
     st = os.stat('run_rivet.sh')
     os.chmod('run_rivet.sh', st.st_mode | stat.S_IEXEC)    
-    log.info("Running rivet script")
+    log.info(f"Running rivet routine {routine_name}")
     subprocess.call(["./run_rivet.sh"], cwd=os.getcwd())
 
 
@@ -94,7 +94,7 @@ def rivet_analyze_job(config: DictConfig, file_type='.hepmc.gz', routine=None) -
         else:
             job_dir = os.getcwd()
     
-    input_files = get_files_with_extn(job_dir, file_type) # [path for path in Path(job_dir).rglob(f'{file_type}')]
+    input_files = get_files_with_extn(f"{job_dir}/Events", file_type) # [path for path in Path(job_dir).rglob(f'{file_type}')]
 
     # If no hepmc files were found
     if len(input_files) < 1:
