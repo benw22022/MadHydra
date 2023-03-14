@@ -243,10 +243,10 @@ namespace Rivet {
         m_OutputTree->Branch("neutrino_pz",     &b_neutrino_pz    );
         m_OutputTree->Branch("neutrino_pid",    &b_neutrino_pid   );
 
-        m_OutputTree->Branch("eTmiss",     &b_eTmiss,  "eTmiss/D");
-        m_OutputTree->Branch("HTlep",      &b_HTlep,   "HTlep/D");
-        m_OutputTree->Branch("HTjets",     &b_HTjets,  "HTjets/D");
-        m_OutputTree->Branch("meff",       &b_meff,    "meff/D");
+        m_OutputTree->Branch("eTmiss", &b_eTmiss,  "eTmiss/D");
+        m_OutputTree->Branch("HTlep",  &b_HTlep,   "HTlep/D");
+        m_OutputTree->Branch("HTjets", &b_HTjets,  "HTjets/D");
+        m_OutputTree->Branch("meff",   &b_meff,    "meff/D");
         
         m_MetaDataTree->Branch("total_xs",               &b_total_xs,             "total_xs_madgraph/D");
         m_MetaDataTree->Branch("total_xs_error",         &b_err_xs_mg,            "total_xs_error/D");
@@ -423,8 +423,8 @@ namespace Rivet {
         double eTmiss = pTmiss.pT()/GeV;
 
         // Veto event if we have < 2 leptons
-        cutflow.BookCut("< 2 leptons");
         if (recon_leptons.size() + tau_candidates.size() < 2){
+          cutflow.Count("< 2 leptons");
           vetoEvent;
         }
 
