@@ -1,4 +1,5 @@
 import logger
+logger.setup_default_logger()
 log = logger.get_logger(__name__)
 
 import os
