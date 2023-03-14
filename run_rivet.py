@@ -57,7 +57,7 @@ def main() -> None:
     parser.add_argument("run_dir", help="directory to look through for simulation jobs", type=str)
     parser.add_argument("--routine", help="if given, overides rivet routine provided in original config", type=str, default='')
     parser.add_argument("--mp", help="Use multiprocessing", type=bool, default=False)
-    parser.add_argument("--cores", help="number of cores to use for mp", type=bool, default=None)
+    parser.add_argument("--cores", help="number of cores to use for mp", type=bool, default=10)
     args = parser.parse_args()
 
     routine = args.routine
