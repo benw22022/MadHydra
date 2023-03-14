@@ -42,7 +42,7 @@ debug: False                                                 # run, but don't ru
 # Transfer output (only when running in batch mode)
 transfer_files: ${batch}                                                                   # if True then transfer files (here will only do so if batch=True)
 cleanup: True                                                                              # Delete all the rubbish from the MG production dir
-transfer_dir: /data/bewilson/generate_output/${process.process_name}_${process.output_dir} # Location to transfer MG production dir after generation
+transfer_dir: /data/bewilson/generate_output/${process.process_name}/${process.output_dir} # Location to transfer MG production dir after generation
 
 # Athena Generation (TODO: Work in progress - would be nice to implement this)
 use_athena: False
