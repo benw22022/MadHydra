@@ -1,0 +1,33 @@
+---
+model: TypeII_NLO_v1_2_UFO            # See: https://arxiv.org/abs/1912.08975
+
+process_name: typeII_single_prod_dppjj
+
+output_dir: '${process.process_name}_${parameters.MDPP}_${eval: "10**${parameters.log10_vevD}"}'
+
+rivet: minimal_2l2j
+
+sweep:
+    dir: multirun/${now:%Y-%m-%d}_${process.processs_name}
+    subdir: ${process.output_dir}
+
+gen_cmd: ['import model ${process.model}',
+          'generate p p > d++ j j',
+          'add process p p > d-- j j',
+          'output ${process.output_dir}',
+          'launch',
+          'shower=pythia8',
+          'set vevd: ${eval: "10**${parameters.log10_vevD}"}',
+          'set MD0 ${parameters.MDPP}',
+          'set MDP ${parameters.MDPP}',
+          'set MDPP ${parameters.MDPP}',
+          'set WD0 ${parameters.WD0}',
+          'set WDP ${parameters.WDP}',
+          'set WDPP ${parameters.WDPP}',
+          'set lamHD1 1.0',
+          'set lamD1 1.0',
+          'set nevents ${parameters.nevents}'
+          ]
+
+          # NOTE: setting MD0 = MDP = MDPP on purpose to simplfy things
+          # NOTE: lamHD1 1.0 = lamD1 1.0 = 1 like in paper (also how J&L did things)

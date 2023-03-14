@@ -3,7 +3,7 @@ model: Standard_Model
 
 process_name: SM_ttbar
 
-output_dir: ${process.process_name}
+output_dir: ${process.process_name}_${parameters.dummy}
 
 rivet: minimal_2l2j
 
