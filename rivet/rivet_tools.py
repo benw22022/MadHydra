@@ -13,7 +13,7 @@ import gzip
 import shutil
 import inspect
 import stat
-from source import launch_process
+from source import launch_process, get_files_with_extn
 import subprocess
 
 # bash commands for setting up enviroment with rivet
@@ -21,6 +21,7 @@ RIVET_SETUP = (r'export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLoc
                r'source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh',
                r'asetup 23.6.1, AthGeneration',
                r'lsetup "views LCG_102b_ATLAS_2 x86_64-centos7-gcc11-opt"')
+
 
 def run_gunzip(fpath: str) -> None:
     """
@@ -37,6 +38,7 @@ def run_gunzip(fpath: str) -> None:
             shutil.copyfileobj(f_in, f_out)
     
     return str(fpath).replace('.gz', '')
+
 
 def compile_and_run_routine(routine_name: str, hepmc_file: str) -> None:
     """
@@ -69,7 +71,8 @@ def compile_and_run_routine(routine_name: str, hepmc_file: str) -> None:
     log.info("Running rivet script")
     subprocess.call(["./run_rivet.sh"], cwd=os.getcwd())
 
-def rivet_analyze_job(config: DictConfig, file_type='*.hepmc.gz', routine=None) -> None:    
+
+def rivet_analyze_job(config: DictConfig, file_type='.hepmc.gz', routine=None) -> None:    
     """
     Runs rivet analysis for a simulation job
     Args:
@@ -91,11 +94,11 @@ def rivet_analyze_job(config: DictConfig, file_type='*.hepmc.gz', routine=None) 
         else:
             job_dir = os.getcwd()
     
-    input_files = [path for path in Path(job_dir).rglob(f'{file_type}')]
+    input_files = get_files_with_extn(job_dir, file_type) # [path for path in Path(job_dir).rglob(f'{file_type}')]
 
     # If no hepmc files were found
     if len(input_files) < 1:
-        log.error(f"No hepmc files found on path {job_dir}")
+        log.error(f"No {file_type} files found on path {job_dir}")
         return
 
     # Override rivet routine in config if requested

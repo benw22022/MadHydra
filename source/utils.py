@@ -93,3 +93,17 @@ def delete_files_with_extn(directory: str, extn: str) -> List[str]:
         deleted_files.append(path)
 
     return deleted_files
+
+
+def get_files_with_extn(directory: str, extn:str) -> List[str]:
+    """
+    Get all files in directory with exension
+    args:
+        directory: str - directory to search
+        extn: str - file extension to search for
+    returns:
+        List[str] - list of file paths of files ending in `extn`
+    """
+    return [os.path.join(r, fn)
+        for r, ds, fs in os.walk(directory) 
+        for fn in fs if fn.endswith(extn)]
