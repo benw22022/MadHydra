@@ -19,12 +19,18 @@ from dataclasses import dataclass
 
 @dataclass
 class Result:
+    """
+    Data class for holding doubly charged Higgs results
+    """
     vevd: float
     mdpp: float
-    quantity: float
-    file: str
+    quantity: float = -999  # variable quantity e.g. xsec, eff etc...
+    file: str = ""
 
     def __lt__(self, other):
+        """
+        Override < operator - allows to sort list of class by vevd
+        """
         return self.vevd < other.vevd
 
 @cache
