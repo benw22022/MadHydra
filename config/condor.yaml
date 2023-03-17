@@ -10,5 +10,5 @@ condor:
   Requirements: (OpSysAndVer == "CentOS7")
   +MyProject  : "af-atlas"
   +JobFlavour : "tomorrow"
-  RequestCpus : 10
+  RequestCpus : 15
   notification: Error
