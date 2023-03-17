@@ -68,44 +68,40 @@ def run_local_generation(config: DictConfig) -> None:
     mg_path = os.path.join(this_filepath, config.madgraph_dir)
     madgraph_exec = os.path.join(mg_path, 'bin', 'mg5_aMC')
 
+    # write the process card for MadGraph
     write_proc_card(config)
     
+    # If we're running in debug mode stop here
     if config.debug:
         return
     
+    # Run generation
     utils.launch_process([madgraph_exec, 'proc_card.dat'], 'MadGraph', logfile='log.generate')
     
-    if not OmegaConf.is_missing(config, config.process['rivet']):
-        log.info(f"Running rivet routine {config.process.rivet}")
-        rivet.rivet_analyze_job(config)
-    
+    # Run cleanup
     if config.cleanup:
         log.info("Running cleanup")
         run_cleanup(config)
 
+    # Transfer output
     if config.transfer_files:
         transfer_loc = config.transfer_dir
         os.makedirs(transfer_loc, exist_ok=True)
-
-        # madgraph dir
-        os.system("ls")
-        print(config.process.output_dir, transfer_loc)
 
         copy_tree(config.process.output_dir, transfer_loc)
         
         hydra_cfg_dir = os.path.join(transfer_loc, '.hydra')
         os.makedirs(hydra_cfg_dir, exist_ok=True)
-        
-        print(f"hydra_cfg_dir = {hydra_cfg_dir}")
 
         shutil.copy('.hydra/hydra.yaml', hydra_cfg_dir)
         shutil.copy('.hydra/config.yaml', hydra_cfg_dir)
         shutil.copy('.hydra/overrides.yaml', hydra_cfg_dir)        
         
-        # log files 
         [shutil.copy(f, transfer_loc) for f in glob.glob("*log*")]
-
-        # root files
-        [shutil.copy(f, transfer_loc) for f in glob.glob(".root")]
-        
+        [shutil.copy(f, transfer_loc) for f in glob.glob("*.root")]
+    
+    # Run rivet routine
+    if not OmegaConf.is_missing(config, config.process['rivet']):
+        log.info(f"Running rivet routine {config.process.rivet}")
+        rivet.rivet_analyze_job(config)
         
