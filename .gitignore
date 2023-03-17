@@ -20,3 +20,4 @@ log.*
 *.hepmc
 *tmp*
 .ipynb*
+notebooks/plots
