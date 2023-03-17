@@ -156,7 +156,7 @@ namespace Rivet {
       double b_eTmiss;
       double b_meff;
 
-      double b_weight
+      double b_weight;
 
       double b_total_xs;
       double b_err_xs_mg;
@@ -532,7 +532,7 @@ namespace Rivet {
       b_eTmiss = eTmiss;
       b_meff = meff;
 
-      b_weight= event.weights()[0]
+      b_weight= event.weights()[0];
 
       //=================== Summing up weight of surviving events ===================//
 
