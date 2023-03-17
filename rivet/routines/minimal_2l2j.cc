@@ -187,7 +187,7 @@ namespace Rivet {
 
         m_OutputTree->Branch("jet_pt",     &b_jet_pt    );
         m_OutputTree->Branch("jet_rap",    &b_jet_rap   );
-        m_OutputTree->Branch("jet_phi",    &b_jet_pt    );
+        m_OutputTree->Branch("jet_phi",    &b_jet_phi    );
         m_OutputTree->Branch("jet_mass",   &b_jet_mass  );
         m_OutputTree->Branch("jet_energy", &b_jet_energy );
         m_OutputTree->Branch("jet_px",     &b_jet_px    );
@@ -223,7 +223,7 @@ namespace Rivet {
         m_OutputTree->Branch("tau_daughter_pz",     &b_tau_daughter_pz    );
         m_OutputTree->Branch("tau_daughter_pid",    &b_tau_daughter_pid   );
 
-        m_OutputTree->Branch("photon_pt",    &b_photon_pt   );
+        m_OutputTree->Branch("photon_pt",     &b_photon_pt   );
         m_OutputTree->Branch("photon_rap",    &b_photon_rap   );
         m_OutputTree->Branch("photon_phi",    &b_photon_pt    );
         m_OutputTree->Branch("photon_mass",   &b_photon_mass  );
@@ -261,14 +261,6 @@ namespace Rivet {
         m_MetaDataTree->Branch("presel_eff",             &b_presel_eff,            "preself_eff/D");
         m_MetaDataTree->Branch("cutflow",                &cutflow,                 "cutflow");
 
-
-
-        // To calculate the acceptance without having the fiducial lepton efficiencies included, this part can be turned off
-        _use_fiducial_lepton_efficiency = true;
-
-        // Random numbers for simulation of ATLAS detector reconstruction efficiency
-        srand(160385);
-
         // Final state including all charged and neutral particles
         const FinalState fs((Cuts::etaIn(-5.0, 5.0) && Cuts::pT >=  1*GeV));
         declare(fs, "FS");
@@ -282,7 +274,6 @@ namespace Rivet {
         // Final state including all AntiKt 04 Jets
         VetoedFinalState vfs;
         vfs.addVetoPairId(PID::MUON); // this removes Muons/Taus from visible final state - prevents inclusion in jets?
-        vfs.addVetoPairId(PID::TAU);
         declare(FastJets(vfs, FastJets::ANTIKT, 0.4), "AntiKtJets04");
 
         // Final state including all unstable particles (including taus)
@@ -325,8 +316,6 @@ namespace Rivet {
 
         if(event_number % 1000 == 0){std::cout << "Proccessing event: " << event_number << std::endl;}
 
-
-        
         //=================== weight and variance ===================//
 
         // This will calculate the weight for each of the N events that rivet processes
