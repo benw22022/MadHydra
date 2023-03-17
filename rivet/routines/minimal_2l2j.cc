@@ -156,6 +156,8 @@ namespace Rivet {
       double b_eTmiss;
       double b_meff;
 
+      double b_weight
+
       double b_total_xs;
       double b_err_xs_mg;
       double b_sumW;
@@ -247,6 +249,8 @@ namespace Rivet {
         m_OutputTree->Branch("HTlep",  &b_HTlep,   "HTlep/D");
         m_OutputTree->Branch("HTjets", &b_HTjets,  "HTjets/D");
         m_OutputTree->Branch("meff",   &b_meff,    "meff/D");
+
+        m_OutputTree->Branch("weight",   &b_weight,    "weight/D");
         
         m_MetaDataTree->Branch("total_xs",               &b_total_xs,             "total_xs_madgraph/D");
         m_MetaDataTree->Branch("total_xs_error",         &b_err_xs_mg,            "total_xs_error/D");
@@ -528,6 +532,8 @@ namespace Rivet {
       b_eTmiss = eTmiss;
       b_meff = meff;
 
+      b_weight= event.weights()[0]
+
       //=================== Summing up weight of surviving events ===================//
 
       //This will calculate the weight for the N_selected events after some cuts. If an event i passes the cuts, its weight will be calculated here
@@ -546,6 +552,7 @@ namespace Rivet {
       survive_event_number++;
       m_OutputTree->Fill();
 
+      // Clear vectors
       b_jet_pt.clear();
       b_jet_rap.clear();
       b_jet_phi.clear();
@@ -605,6 +612,7 @@ namespace Rivet {
       b_neutrino_pz.clear();
       b_neutrino_pid.clear();
 
+      // Count #events that survived selection
       cutflow.Count("final");
 
     }
