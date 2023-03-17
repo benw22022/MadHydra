@@ -1,7 +1,7 @@
 ---
 model: TypeII_NLO_v1_2_UFO              # See: https://arxiv.org/abs/1912.08975
 
-process_name: typeII_double_prod_4l
+process_name: double_production_leptonic
 
 output_dir: ${process.process_name}_${parameters.MDPP}_${parameters.log10_vevD}
 

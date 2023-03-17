@@ -1,15 +1,11 @@
 ---
 model: TypeII_NLO_v1_2_UFO              # See: https://arxiv.org/abs/1912.08975
 
-process_name: typeII_single_prod_lljj
+process_name: single_production_leptonic
 
 output_dir: ${process.process_name}_${parameters.MDPP}_${parameters.log10_vevD}
 
 rivet: minimal_2l2j
-
-sweep:
-    dir: multirun/${now:%Y-%m-%d}_${process.processs_name}
-    subdir: ${process.output_dir}
 
 gen_cmd: ['import model ${process.model}',
           'define lep+ e+ mu+ ta+',
