@@ -1,7 +1,7 @@
 ---
 model: Standard_Model
 
-process_name: SM_ssWW_EWK
+process_name: SM_ssWW_INT
 
 output_dir: ${process.process_name}
 
@@ -13,8 +13,8 @@ gen_cmd: ['define l+ = e+ mu+ ta+',
           'define vl~ = ve~ vm~ vt~',
           'define p = g u c d s u~ c~ d~ s~ b b~',
           'define j = g u c d s u~ c~ d~ s~ b b~',
-          'generate p p > w+ w+  j j aEW=4 aS=0 [QCD] @1',
-          'add process p p > w- w-  j j aEW=4 aS=0 [QCD] @1',
+          'generate p p > l+ vl l+ vl j j QCD^2==2 @1',
+          'add process p p > l- vl~ l- vl~ j j QCD^2==2 @1',
           'output ${process.output_dir}',
           'launch',
           'shower=pythia8',
