@@ -668,7 +668,7 @@ namespace Rivet {
         b_err_fid_xs              =  err_fid_xs;
         b_survive_event_number    =  survive_event_number;
         b_event_number            =  event_number;
-        b_presel_eff              =  survive_event_number / event_number * 100;
+        b_presel_eff              =  ((double)survive_event_number / (double)event_number) * 100;
 
         cutflow.Print();
         
