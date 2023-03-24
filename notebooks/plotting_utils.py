@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from functools import cache
 from dataclasses import dataclass
+import awkward as ak
 
 
 @dataclass
@@ -90,3 +91,20 @@ def plot_results(results, name, log):
 
     ax.set_xlabel(r"$M_{\Delta^{\pm\pm}}$ [GeV]");
     ax.set_ylabel(r"vevD [GeV]");
+
+
+def unravel_weights(data: ak.Array, weight: ak.Array) -> np.ndarray:
+    """
+    Function to  create an array of weights of the correct length used when making plots of awkward arrays with
+    object multiplicity i.e. all jet pT etc...
+
+    Args:
+        data (ak.Array): Awkward array of the data
+        weight (ak.Array): Awkward array of the weights
+
+    Returns:
+        np.ndarray: Numpy array of weights, the same shape as np.ravel(data)
+    """
+    new_weights = ak.ones_like(data)
+    new_weights = new_weights * weight
+    return np.asarray(np.ravel(new_weights))
