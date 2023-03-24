@@ -1,22 +1,12 @@
 ---
+# see https://gitlab.cern.ch/atlas-physics/pmg/mcjoboptions/-/blob/master/500xxx/500991/mc.MGH7EG_LO_INT_ssWWjj.py
+
 model: Standard_Model
 
 process_name: SM_ssWW_INT
 
-output_dir: ${process.process_name}
+output_dir: madevent
 
 rivet: minimal_2l2j
 
-gen_cmd: ['define l+ = e+ mu+ ta+',
-          'define vl = ve vm vt',
-          'define l- = e- mu- ta-',
-          'define vl~ = ve~ vm~ vt~',
-          'define p = g u c d s u~ c~ d~ s~ b b~',
-          'define j = g u c d s u~ c~ d~ s~ b b~',
-          'generate p p > l+ vl l+ vl j j QCD^2==2 @1',
-          'add process p p > l- vl~ l- vl~ j j QCD^2==2 @1',
-          'output ${process.output_dir}',
-          'launch',
-          'shower=pythia8',
-          'set nevents ${parameters.nevents}'
-          ]
+dsid: 500988

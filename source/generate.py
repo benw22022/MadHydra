@@ -7,9 +7,10 @@ import inspect
 import glob
 from omegaconf import DictConfig, OmegaConf
 from distutils.dir_util import copy_tree
+import traceback
 import source.utils as utils
 import rivet
-
+import athgeneration
 
 def write_proc_card(config : DictConfig) -> None:
     """
@@ -62,26 +63,38 @@ def run_local_generation(config: DictConfig) -> None:
     log.info("Running local generation")
     log.debug(f"Process is: \n {config.process}")
 
-    # Some hacky stuff to workout where MadGraph is 
-    this_filename = inspect.getframeinfo(inspect.currentframe()).filename
-    this_filepath = os.path.dirname(os.path.dirname(os.path.abspath(this_filename)))
-    mg_path = os.path.join(this_filepath, config.madgraph_dir)
-    madgraph_exec = os.path.join(mg_path, 'bin', 'mg5_aMC')
+    # Check if we're trying to run an official dsid (we can use Athena for this)
+    if config.process.get("dsid", False):
+        athgeneration.generate_dsid(config)
 
-    # write the process card for MadGraph
-    write_proc_card(config)
-    
-    # If we're running in debug mode stop here
-    if config.debug:
-        return
-    
-    # Run generation
-    utils.launch_process([madgraph_exec, 'proc_card.dat'], 'MadGraph', logfile='log.generate')
-    
+    else:
+        # Some hacky stuff to workout where MadGraph is 
+        this_filename = inspect.getframeinfo(inspect.currentframe()).filename
+        this_filepath = os.path.dirname(os.path.dirname(os.path.abspath(this_filename)))
+        mg_path = os.path.join(this_filepath, config.madgraph_dir)
+        madgraph_exec = os.path.join(mg_path, 'bin', 'mg5_aMC')
+
+
+        # write the process card for MadGraph
+        write_proc_card(config)
+        
+        # If we're running in debug mode stop here
+        if config.debug: return
+        
+        # Run generation using local MadGraph installation
+        utils.launch_process([madgraph_exec, 'proc_card.dat'], 'MadGraph', logfile='log.generate')
+        
     # Run cleanup
     if config.cleanup:
         log.info("Running cleanup")
-        run_cleanup(config)
+        try:
+            run_cleanup(config)
+        except Exception as e:
+            log.error("An error occured while trying to clean up directory")
+            os.system("pwd")
+            os.system("ls")
+            log.error(traceback.format_exc())
+            log.error(e)
 
     # Transfer output
     if config.transfer_files:
@@ -103,5 +116,9 @@ def run_local_generation(config: DictConfig) -> None:
     # Run rivet routine
     if not OmegaConf.is_missing(config, config.process['rivet']):
         log.info(f"Running rivet routine {config.process.rivet}")
-        rivet.rivet_analyze_job(config)
+
+        # If we use AthGeneration we'll get a .EVNT.root as an output, otherwise it'll be a .hepmc.gz
+        file_type = '.hepmc.gz' if not config.process.get("dsid", False) else '.EVNT.root'
+
+        rivet.rivet_analyze_job(config, file_type=file_type)
         
