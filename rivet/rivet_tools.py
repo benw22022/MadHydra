@@ -87,12 +87,12 @@ def rivet_analyze_job(config: DictConfig, file_type='.hepmc.gz', routine=None) -
     if not job_dir or not config.batch:
         
         # If we are loading a .hydra conf from a previous run
-        if config.get("hydra", False):                         
+        if config.get("hydra", False):          
             job_dir = config.hydra.runtime.output_dir
         
         # Otherwise this is a current MadHydra generation and we're already in the run dir
         else:
-            job_dir = os.getcwd()
+            job_dir = os.path.join(os.getcwd(), config.process.output_dir)
     
     input_files = get_files_with_extn(f"{job_dir}/Events", file_type) # [path for path in Path(job_dir).rglob(f'{file_type}')]
 
