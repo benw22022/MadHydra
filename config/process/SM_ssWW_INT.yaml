@@ -9,4 +9,15 @@ output_dir: madevent
 
 rivet: minimal_2l2j
 
-dsid: 500988
+gen_cmd: ['define l+ e+ mu+ ta+',
+          'define l- e- mu- ta-',
+          'define v ve vm vt',
+          'define v~ ve~ vm~ vt~ ',
+          'generate p p > l+ vl l+ vl j j QCD^2==2 @1',
+          'add process p p > l- vl~ l- vl~ j j QCD^2==2 @1',
+          'output ${process.process_name}',
+          'launch',
+          'shower=pythia8',
+          'set sde_strategy 1', # These options really help improve event yield
+          'set hard_survey 1',
+          ]

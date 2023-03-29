@@ -5,8 +5,21 @@ model: Standard_Model
 
 process_name: SM_ssWW_EWK
 
-output_dir: madevent # Note, when generating official dsids this is the name of the output dir
+output_dir: SM_ssWW_EWK # Note, when generating official dsids this is the name of the output dir
 
 rivet: minimal_2l2j
 
-dsid: 500986
+# dsid: 500992 # 500986
+
+gen_cmd: ['define l+ e+ mu+ ta+',
+          'define l- e- mu- ta-',
+          'define v ve vm vt',
+          'define v~ ve~ vm~ vt~ ',
+          'generate p p > l+ l+ v v j j QED==6 QCD=0 @1',
+          'add process p p > l- l- v~ v~ j j QED==6 QCD=0 @1',
+          'output ${process.process_name}',
+          'launch',
+          'shower=pythia8',
+          'set sde_strategy 1', # These options really help improve event yield
+          'set hard_survey 1',
+          ]
