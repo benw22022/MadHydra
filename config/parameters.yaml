@@ -9,5 +9,11 @@ parameters:
   WDPP: 'auto' 
   nevents:  10000
 
+  # TypeII seesaw 'otherM'
+  MH2: 500
+  MA0: 500
+  MHP: 500
+  MH2P: 500
+  log10_vevT: -3
   
   dummy: 0 # For testing

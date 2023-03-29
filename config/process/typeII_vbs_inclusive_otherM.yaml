@@ -1,0 +1,31 @@
+---
+model: TypeII_Seesaw_UFO
+
+process_name: single_production_inclusive_otherM
+
+output_dir: '${process.process_name}_${parameters.MH2P}_${eval: "10**${parameters.log10_vevT}"}'
+
+rivet: minimal_2l2j
+
+gen_cmd: ['import model ${process.model}',
+          'generate p p > h++ j j',
+          'add process p p > h-- j j',
+          'output ${process.output_dir}',
+          'launch',
+          'shower=pythia8',
+          'set vevT ${eval: "10**${parameters.log10_vevT}"}',
+          'set MH2 ${parameters.MH2P}',
+          'set MA0 ${parameters.MH2P}',
+          'set MHP ${parameters.MH2P}',
+          'set MH2P ${parameters.MH2P}',
+          'set WH2 auto',
+          'set WA0 auto',
+          'set WHP auto',
+          'set WH2P auto',
+          'set lamHD1 1.0',
+          'set lamD1 1.0',
+          'set nevents ${parameters.nevents}'
+          ]
+
+          # NOTE: setting MD0 = MDP = MH2P on purpose to simplfy things
+          # NOTE: lamHD1 1.0 = lamD1 1.0 = 1 like in paper (also how J&L did things)
