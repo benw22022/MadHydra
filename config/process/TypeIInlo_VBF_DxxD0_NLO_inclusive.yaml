@@ -1,0 +1,22 @@
+---
+model: TypeII_NLO_v1_2_UFO            # See: https://arxiv.org/abs/1912.08975
+
+process_name: TypeIInlo_VBF_DxxD0_NLO_inclusive
+
+output_dir: ${process.process_name} # _${parameters.MD0}__${parameters.MDP}_${parameters.MDPP}
+
+gen_cmd: ['import model ${process.model}',
+          'define dxx d++ d--',
+          'generate p p > dxx d0 j j QCD=0 QED=4 [QCD]',
+          'output ${process.output_dir}',
+          'launch ',
+          'shower=pythia8',
+          'set vevd: 1e-8',
+          'set mdpp scan1:[550,1000]',
+          'set mdp scan1:[550,1000]',
+          'set md0 scan1:[550,1000]',
+          'set WD0 ${parameters.WD0}',
+          'set WDP ${parameters.WDP}',
+          'set WDPP ${parameters.WDPP}',
+          'set nevents ${parameters.nevents}'
+          ]
