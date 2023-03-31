@@ -5,7 +5,7 @@ model: Standard_Model
 
 process_name: SM_ssWW_INT
 
-output_dir: madevent
+output_dir: SM_ssWW_INT
 
 rivet: minimal_2l2j
 

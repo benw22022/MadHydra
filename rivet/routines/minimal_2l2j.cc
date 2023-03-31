@@ -206,6 +206,7 @@ namespace Rivet {
         m_OutputTree->Branch("lep_pz",     &b_lep_pz    );
         m_OutputTree->Branch("lep_pid",    &b_lep_pid   );
 
+        m_OutputTree->Branch("tau_pt",     &b_tau_pt   );
         m_OutputTree->Branch("tau_rap",    &b_tau_rap   );
         m_OutputTree->Branch("tau_phi",    &b_tau_pt    );
         m_OutputTree->Branch("tau_mass",   &b_tau_mass  );
