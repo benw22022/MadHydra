@@ -47,9 +47,9 @@ def get_results(samples_dir, quantity):
             vevd = -999
             mdpp = -999
             for item in cfg_list:
-                if 'vevD' in item:
+                if 'vevD' in item or 'vevT' in item:
                     vevd = 10**float(item.split("=")[-1])
-                if 'MDPP' in item:
+                if 'MDPP' in item or 'MH2P' in item:
                     mdpp = float(item.split("=")[-1])
 
             root_file = f"{os.path.dirname(os.path.dirname(fpath))}/output.root"
