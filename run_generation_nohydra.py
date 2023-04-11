@@ -17,6 +17,8 @@ def run_generation_nohydra():
     This is the path to the .hydra director containing the config.yaml and hydra.yaml config files
     We need this to rebuild the DictConfig object and run without needing to invoke hydra
     TODO: There is probably a nicer way to do this in `run_generation.py` with hydra's compose API but I can't see it
+    ?NOTE: Can instead make better use of condor so we can reuse run_generation.py with override args
+    !NOTE: testing and implementing this - if it works, this file will be removed
     """
     
     # Parse arguements

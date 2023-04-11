@@ -24,6 +24,3 @@ gen_cmd: ['import model ${process.model}',
           'set WH2P auto',
           'set nevents ${parameters.nevents}'
           ]
-
-          # NOTE: setting MD0 = MDP = MH2P on purpose to simplfy things
-          # NOTE: lamHD1 1.0 = lamD1 1.0 = 1 like in paper (also how J&L did things)

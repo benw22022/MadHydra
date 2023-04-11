@@ -1,0 +1,64 @@
+tree:
+  - jet_pt
+  - jet_rap
+  - jet_phi
+  - jet_mass
+  - jet_energy
+  - jet_px
+  - jet_py
+  - jet_pz
+  -
+  
+  - lep_pt
+  - lep_rap
+  - lep_phi
+  - lep_mass
+  - lep_energy
+  - lep_px
+  - lep_py
+  - lep_pz
+  - lep_pid
+  
+  - tau_rap
+  - tau_phi
+  - tau_mass
+  - tau_energy
+  - tau_px
+  - tau_py
+  - tau_pz
+  - tau_pid
+  
+  - tau_daughter_pt
+  - tau_daughter_rap
+  - tau_daughter_phi
+  - tau_daughter_mass
+  - tau_daughter_energy
+  - tau_daughter_px
+  - tau_daughter_py
+  - tau_daughter_pz
+  - tau_daughter_pid
+  
+  - photon_pt
+  - photon_rap
+  - photon_phi
+  - photon_mass
+  - photon_energy
+  - photon_px
+  - photon_py
+  - photon_pz
+  - photon_pid
+  
+  - neutrino_pt
+  - neutrino_rap
+  - neutrino_phi
+  - neutrino_mass
+  - neutrino_energy
+  - neutrino_px
+  - neutrino_py
+  - neutrino_pz
+  - neutrino_pid
+  
+  - eTmiss
+  - HTlep
+  - HTjets
+  - meff
