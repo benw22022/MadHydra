@@ -21,3 +21,4 @@ log.*
 *tmp*
 .ipynb*
 notebooks/plots
+test_data
