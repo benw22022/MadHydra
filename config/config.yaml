@@ -37,10 +37,11 @@ conda_dir: /home/bewilson/miniconda3                         # location of conda
 conda_env: madhydra                                          # name of conda enviroment
 
 batch: False                                                 # run on htc batch system
+__on_batch: ${batch}                                         # this job **is** running on batch systen
 debug: False                                                 # run, but don't run MadGraph or submit batch jobs
 
 # Transfer output (only when running in batch mode)
-transfer_files: ${batch}                                                                   # if True then transfer files (here will only do so if batch=True)
+transfer_files: ${__on_batch}                                                              # if True then transfer files (here will only do so if batch=True)
 cleanup: True                                                                              # Delete all the rubbish from the MG production dir
 transfer_dir: /data/bewilson/generate_output/${process.process_name}/${process.output_dir} # Location to transfer MG production dir after generation
 

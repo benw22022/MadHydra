@@ -2,8 +2,8 @@
 # Settings for condor submission
 condor:
   universe  : vanilla
-  executable: /home/bewilson/miniconda3/envs/madhydra/bin
-  arguments: $(ARGUMENTS)
+  executable: generate.sh
+  # arguments: $(ARGUMENTS)
   log   : generation_$(ClusterID).log
   output: generation_$(ClusterID)_$(ProcId).out
   error : generation_$(ClusterID)_$(ProcId).error
