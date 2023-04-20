@@ -1,0 +1,29 @@
+---
+model: TypeII_NLO_v1_2_UFO              # See: https://arxiv.org/abs/1912.08975
+
+process_name: ZRadHiggs
+
+output_dir: ${process.process_name}_${parameters.MDPP}_${parameters.log10_vevD}
+
+rivet: dch_lep_rad
+
+gen_cmd: ['import model ${process.model}',
+          'define l+ e+ mu+ ta+',
+          'define l- e- mu- ta-',
+          'generate p p > Z,  (Z > l+ l-, (l+ > l+ l+ l-))',
+          'add process p p > Z,  (Z > l+ l-, (l- > l+ l- l-))',
+          'output ${process.output_dir}',
+          'launch ',
+          'shower=pythia8',
+          'set vevd ${eval: "10**${parameters.log10_vevD}"}',
+          'set MD0 15000',
+          'set MDP 15000',
+          'set MDPP ${parameters.MDPP}',
+          'set WDPP auto',
+          'set lamHD1 1.0',
+          'set lamD1 1.0',
+          'set nevents ${parameters.nevents}'
+          ]
+
+          # NOTE: setting MD0 = MDP = MDPP on purpose to simplfy things
+          # NOTE: lamHD1 1.0 = lamD1 1.0 = 1 like in paper (also how J&L did things)
