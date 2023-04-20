@@ -22,3 +22,4 @@ log.*
 .ipynb*
 notebooks/plots
 test_data
+.bash_history
