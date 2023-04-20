@@ -48,7 +48,7 @@ def submit_job(config: DictConfig) -> None:
         if 'batch' in override:
             continue
         arguments += f" {override}"
-    arguments += "__on_batch=True"
+    arguments += " __on_batch=True"
 
     # hostname_job['arguments'] = arguments   
     # hostname_job['job_name'] = arguments
@@ -60,7 +60,7 @@ def submit_job(config: DictConfig) -> None:
         log.info("Debug mode set - won't actually submit job")
         return
 
-    log.info(hostname_job)
+    log.debug(hostname_job)
 
     # return 
     # now submit job
