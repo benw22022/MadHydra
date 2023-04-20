@@ -58,6 +58,8 @@ def compile_and_run_routine(routine_name: str, hepmc_file: str) -> None:
     # Grab routine name from config and extract fpath to C++ file
     rivet_routine_fpath = os.path.join(this_filepath, "routines", f"{routine_name}.cc")
 
+    log.info(f"Compiling {rivet_routine_fpath}")
+
     # Now compile and run routine, to make life easier write commands to a shell script
     with open("run_rivet.sh", "w") as script:
         script.write("#!/bin/sh\n")
@@ -88,7 +90,8 @@ def rivet_analyze_job(config: DictConfig, file_type='.hepmc.gz', routine=None) -
         
         # If we are loading a .hydra conf from a previous run
         if config.get("hydra", False):          
-            job_dir = config.hydra.runtime.output_dir
+            log.info("Reading directory from cfg")
+            job_dir = os.path.join(config.hydra.runtime.output_dir, config.process.output_dir)
         
         # Otherwise this is a current MadHydra generation and we're already in the run dir
         else:
