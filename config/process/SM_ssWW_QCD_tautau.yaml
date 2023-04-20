@@ -1,0 +1,20 @@
+---
+# see https://gitlab.cern.ch/atlas-physics/pmg/mcjoboptions/-/blob/master/500xxx/500991/mc.MGH7EG_LO_INT_ssWWjj.py
+
+model: Standard_Model
+
+process_name: SM_ssWW_QCD
+
+output_dir: SM_ssWW_QCD
+
+rivet: minimal_2l2j
+
+gen_cmd: [
+          'generate p p > ta+ vt ta+ vt j j QED=4 QCD=2 @1',
+          'add process p p > ta- vt~ ta- vt~ j j QED=4 QCD=2 @1',
+          'output ${process.process_name}',
+          'launch',
+          'shower=pythia8',
+          'set sde_strategy 1', # These options really help improve event yield
+          'set hard_survey 1',
+          ]

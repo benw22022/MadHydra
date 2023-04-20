@@ -8,16 +8,17 @@ output_dir: ${process.process_name}_${parameters.mN3}_${parameters.VtaN3}
 rivet: minimal_2l2j
 
 gen_cmd: ['import model ${process.model}',
-          'generate p p > ta+ ta+ j j,
+          'generate p p > ta+ ta+ j j',
           'add process p p > ta- ta- j j ',
           'output ${process.output_dir}',
           'launch',
           'shower=pythia8',
-          'set mN1     ${parameters.mN1}',
-          'set mN2     ${parameters.mN2}',
+          'set mN1     50000',                    # Set to 50 TeV so other heavyN decouple from physics 
+          'set mN2     50000',                    # Set to 50 TeV so other heavyN decouple from physics
           'set mN3     ${parameters.mN3}',
-          'set VtaN1   ${parameters.VtaN1}',
-          'set VtaN2   ${parameters.VtaN2}',
+          'set VtaN1   0',                        # Also set their couplings to zero
+          'set VtaN2   0',                        # Also set their couplings to zero
           'set VtaN3   ${parameters.VtaN3}',
+          'set WN3     auto',
           'set nevents ${parameters.nevents}'
           ]
