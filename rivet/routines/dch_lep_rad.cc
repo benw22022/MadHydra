@@ -413,7 +413,7 @@ namespace Rivet {
         for (const Particle& p : vfs_particles) pTmiss -= p.momentum();
         double eTmiss = pTmiss.pT()/GeV;
 
-        // Veto event if we have exactly 4 leptons
+        // Veto event unless we have exactly 4 leptons
         if (recon_leptons.size() + tau_candidates.size() != 4){
           cutflow.Count("!= 4 leptons");
           vetoEvent;
@@ -533,7 +533,7 @@ namespace Rivet {
       // SS Inv mass
       for(const Particle &p1 : recon_leptons){
         for(const Particle &p2 : recon_leptons){
-          if (p1.pid() == p2.pid() && p1.phi() != p2.phi()){
+          if (p1.pid() == p2.pid() && p1.phi() != p2.phi()){  // using phi as a way to tell lep_i from lep_j
             auto p3 = p1.momentum() + p2.momentum();
             b_ssl_inv_mass.push_back(p3.mass());
           }
