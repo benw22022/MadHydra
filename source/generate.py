@@ -98,6 +98,7 @@ def run_local_generation(config: DictConfig) -> None:
 
     # Transfer output
     if config.transfer_files:
+        log.info(f"Copying file to {config.transfer_files}")
         transfer_loc = config.transfer_dir
         os.makedirs(transfer_loc, exist_ok=True)
 
@@ -121,4 +122,18 @@ def run_local_generation(config: DictConfig) -> None:
         file_type = '.hepmc.gz' if not config.process.get("dsid", False) else '.EVNT.root'
 
         rivet.rivet_analyze_job(config, file_type=file_type)
+
+        # Copy files
+        if config.transfer_files:
+            [shutil.copy(f, transfer_loc) for f in glob.glob("*log*")]
+            [shutil.copy(f, transfer_loc) for f in glob.glob("*.root")]
+
+        # Also mirror to another location for convenience if requested (yeah this is kinda hacky)
+        if config.get("rivet_copy_dir", False) and config.transfer_files:
+            os.makedirs(config.rivet_copy_dir, exist_ok=True)
+            [shutil.copy(f, config.rivet_copy_dir) for f in glob.glob("*log*")]
+            [shutil.copy(f, config.rivet_copy_dir) for f in glob.glob("*.root")]
+
         
+        
+    log.info("Done")

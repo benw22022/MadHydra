@@ -6,6 +6,7 @@ import htcondor
 from omegaconf import DictConfig, OmegaConf
 from hydra.utils import get_original_cwd
 from typing import List
+from source.utils import launch_process
 
 
 def write_generation_executable(config: DictConfig, arguments: List[str]) -> None:
@@ -24,6 +25,11 @@ def write_generation_executable(config: DictConfig, arguments: List[str]) -> Non
         cmd += f"python3 {arguments} \n"
         f.write(cmd)
 
+
+def write_submission_file(hostname_job):
+    with open("condor.submit", 'w') as f:
+        f.write(str(hostname_job))
+        f.write("\nqueue")
 
 
 def submit_job(config: DictConfig) -> None:
@@ -48,7 +54,8 @@ def submit_job(config: DictConfig) -> None:
         if 'batch' in override:
             continue
         arguments += f" {override}"
-    arguments += " __on_batch=True"
+    arguments += f" transfer_files={config.transfer_files}"
+    arguments += f" rivet_copy_dir={config.rivet_copy_dir}"
 
     # hostname_job['arguments'] = arguments   
     # hostname_job['job_name'] = arguments
@@ -62,10 +69,16 @@ def submit_job(config: DictConfig) -> None:
 
     log.debug(hostname_job)
 
+    write_submission_file(hostname_job)
+
+    launch_process(["condor_submit", "condor.submit"], proc_name="condor")    
+
+    # print(hostname_job)
+
     # return 
     # now submit job
-    schedd = htcondor.Schedd()                   
-    submit_result = schedd.submit(hostname_job)   # TODO Add back in batch-name to jobs
-    log.info(f"submitted job {submit_result.cluster()}: {arguments}")               
+    # schedd = htcondor.Schedd()                   
+    # submit_result = schedd.submit(hostname_job)   # TODO Add back in batch-name to jobs
+    # log.info(f"submitted job {submit_result.cluster()}: {arguments}")               
 
 
