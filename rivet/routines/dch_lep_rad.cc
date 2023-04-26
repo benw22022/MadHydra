@@ -200,7 +200,7 @@ namespace Rivet {
 
         m_OutputTree->Branch("lep_pt",     &b_lep_pt    );
         m_OutputTree->Branch("lep_rap",    &b_lep_rap   );
-        m_OutputTree->Branch("lep_phi",    &b_lep_pt    );
+        m_OutputTree->Branch("lep_phi",    &b_lep_phi   );
         m_OutputTree->Branch("lep_mass",   &b_lep_mass  );
         m_OutputTree->Branch("lep_energy", &b_lep_energy);
         m_OutputTree->Branch("lep_px",     &b_lep_px    );
@@ -208,9 +208,9 @@ namespace Rivet {
         m_OutputTree->Branch("lep_pz",     &b_lep_pz    );
         m_OutputTree->Branch("lep_pid",    &b_lep_pid   );
 
-        m_OutputTree->Branch("tau_pt",     &b_tau_pt   );
+        m_OutputTree->Branch("tau_pt",     &b_tau_pt    );
         m_OutputTree->Branch("tau_rap",    &b_tau_rap   );
-        m_OutputTree->Branch("tau_phi",    &b_tau_pt    );
+        m_OutputTree->Branch("tau_phi",    &b_tau_phi   );
         m_OutputTree->Branch("tau_mass",   &b_tau_mass  );
         m_OutputTree->Branch("tau_energy", &b_tau_energy);
         m_OutputTree->Branch("tau_px",     &b_tau_px    );
@@ -220,7 +220,7 @@ namespace Rivet {
 
         m_OutputTree->Branch("tau_daughter_pt",     &b_tau_daughter_pt    );
         m_OutputTree->Branch("tau_daughter_rap",    &b_tau_daughter_rap   );
-        m_OutputTree->Branch("tau_daughter_phi",    &b_tau_daughter_pt    );
+        m_OutputTree->Branch("tau_daughter_phi",    &b_tau_daughter_phi   );
         m_OutputTree->Branch("tau_daughter_mass",   &b_tau_daughter_mass  );
         m_OutputTree->Branch("tau_daughter_energy", &b_tau_daughter_energy);
         m_OutputTree->Branch("tau_daughter_px",     &b_tau_daughter_px    );
@@ -228,9 +228,9 @@ namespace Rivet {
         m_OutputTree->Branch("tau_daughter_pz",     &b_tau_daughter_pz    );
         m_OutputTree->Branch("tau_daughter_pid",    &b_tau_daughter_pid   );
 
-        m_OutputTree->Branch("photon_pt",     &b_photon_pt   );
+        m_OutputTree->Branch("photon_pt",     &b_photon_pt    );
         m_OutputTree->Branch("photon_rap",    &b_photon_rap   );
-        m_OutputTree->Branch("photon_phi",    &b_photon_pt    );
+        m_OutputTree->Branch("photon_phi",    &b_photon_phi   );
         m_OutputTree->Branch("photon_mass",   &b_photon_mass  );
         m_OutputTree->Branch("photon_energy", &b_photon_energy);
         m_OutputTree->Branch("photon_px",     &b_photon_px    );
@@ -238,9 +238,9 @@ namespace Rivet {
         m_OutputTree->Branch("photon_pz",     &b_photon_pz    );
         m_OutputTree->Branch("photon_pid",    &b_photon_pid   );
 
-        m_OutputTree->Branch("neutrino_pt",     &b_neutrino_pt   );
+        m_OutputTree->Branch("neutrino_pt",     &b_neutrino_pt    );
         m_OutputTree->Branch("neutrino_rap",    &b_neutrino_rap   );
-        m_OutputTree->Branch("neutrino_phi",    &b_neutrino_pt    );
+        m_OutputTree->Branch("neutrino_phi",    &b_neutrino_phi   );
         m_OutputTree->Branch("neutrino_mass",   &b_neutrino_mass  );
         m_OutputTree->Branch("neutrino_energy", &b_neutrino_energy);
         m_OutputTree->Branch("neutrino_px",     &b_neutrino_px    );
