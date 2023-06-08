@@ -18,5 +18,27 @@ gen_cmd: ['import model ${process.model}',
           'set WD0 ${parameters.WD0}',
           'set WDP ${parameters.WDP}',
           'set WDPP ${parameters.WDPP}',
+          'set lamHD1 1.0',
+          'set lamD1 1.0',
+          'set jetalgo -1',
+          'set jetradius 1.0',
+          'set ptj 25',
+          'set etaj 4.5',
+          'set LHC 14',
+          'set pdlabel lhapdf',
+          'set lhaid 26000',
+          'set fixed_ren_scale False',
+          'set fixed_fac_scale False',
+          'set dynamical_scale_choice -1',
+          'set no_parton_cut',
+          'set jetalgo -1',
+          'set jetradius 1.0',
+          'set ptj 25',
+          'set etaj 4.5',
+          'set mll 200',
+          'set drll 2.0',
           'set nevents ${parameters.nevents}'
           ]
+
+          # NOTE: setting MD0 = MDP = MDPP on purpose to simplfy things
+          # NOTE: lamHD1 1.0 = lamD1 1.0 = 1 like in paper (also how J&L did things)

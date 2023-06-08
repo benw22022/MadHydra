@@ -23,8 +23,8 @@ gen_cmd: ['import model ${process.model}',
           'set lamHD1 1.0',
           'set lamD1 1.0',
           'set nevents ${parameters.nevents}',
-          'set sde_strategy 1', # These options really help improve event yield
-          'set hard_survey 1',
+          # 'set sde_strategy 1', #! These options really help improve event yield in VBS, nope no they don't work here
+          # 'set hard_survey 1',
           ]
 
           # NOTE: setting MD0 = MDP = MDPP on purpose to simplfy things

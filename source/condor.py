@@ -55,7 +55,7 @@ def submit_job(config: DictConfig) -> None:
             continue
         arguments += f" {override}"
     arguments += f" transfer_files={config.transfer_files}"
-    arguments += f" rivet_copy_dir={config.rivet_copy_dir}"
+    arguments += f" rivet_copy_dir={os.getcwd()}"
 
     # hostname_job['arguments'] = arguments   
     # hostname_job['job_name'] = arguments

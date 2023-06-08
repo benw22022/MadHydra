@@ -4,6 +4,7 @@ parameters:
  # TypeII seesaw 'Richard & co.'
  # See: https://arxiv.org/abs/1912.08975
   log10_vevD: -7  # Use log10(vevD) since it make it easier to do range based scans with hydra
+  vevD: '${eval: "10**${parameters.log10_vevD}"}'
   MD0: 500
   MDP: 503
   MDPP: 502
@@ -24,9 +25,15 @@ parameters:
   mN1: 50000
   mN2: 50000
   mN3: 500
+  VeN1: 0
+  VeN2: 0
+  VeN3: 0
+  VmuN1: 0
+  VmuN2: 0
+  VmuN3: 0
   VtaN1: 0
   VtaN2: 0
-  VtaN3: 1
+  VtaN3: 0
 
   # Common
   nevents:  10000

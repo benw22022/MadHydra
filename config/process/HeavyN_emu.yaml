@@ -1,0 +1,27 @@
+---
+model: SM_HeavyN_Gen3Mass_NLO
+
+process_name: HeavyN_emujj
+
+output_dir: ${process.process_name}_${parameters.mN3}_${parameters.VmuN1}
+
+rivet: minimal_2l2j
+
+gen_cmd: ['import model ${process.model}',
+          'set acknowledged_v3.1_syntax True --global',
+          'generate p p > e+ mu+ j j QED=4 QCD=0 $$ w+ w- / n2 n3', # [QCD]',
+          'generate p p > e- mu- j j QED=4 QCD=0 $$ w+ w- / n2 n3', # [QCD]',
+          'output ${process.output_dir}',
+          'launch',
+          'shower=pythia8',
+          'set mN1   ${parameters.mN1}',         
+          'set mN2   500000',                # Set to 500 TeV so other heavyN decouple from physics     
+          'set mN3   500000',                # Set to 500 TeV so other heavyN decouple from physics
+          'set VeN1  0.3',                        
+          'set VeN2  0.3',                        
+          'set VeN3  0.3',
+          'set VmuN1 0.3',                        
+          'set VmuN2 0.3',                        
+          'set VmuN3 0.3',
+          'set nevents ${parameters.nevents}'
+          ]

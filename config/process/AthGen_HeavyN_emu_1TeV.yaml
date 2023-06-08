@@ -1,0 +1,12 @@
+---
+# see https://gitlab.cern.ch/atlas-physics/pmg/mcjoboptions/-/blob/master/500xxx/500991/mc.MGH7EG_LO_INT_ssWWjj.py
+
+model: SM_HeavyN_NLO
+
+process_name: HeavyN_emu_1TeV
+
+output_dir: HeavyN_emu_1TeV # Note, when generating official dsids this is the name of the output dir
+
+rivet: minimal_2l2j
+
+JO: /home/bewilson/MadHydra/athgeneration/JO/

@@ -64,7 +64,7 @@ def run_local_generation(config: DictConfig) -> None:
     log.debug(f"Process is: \n {config.process}")
 
     # Check if we're trying to run an official dsid (we can use Athena for this)
-    if config.process.get("dsid", False):
+    if config.process.get("dsid", False)  or config.process.get("JO", False):
         athgeneration.generate_dsid(config)
 
     else:
